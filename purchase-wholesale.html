@@ -108,6 +108,29 @@
     }
     .btn-import:hover { background: #DCFCE7; }
 
+    .btn-export {
+      background: #F5F3FF; color: #7C3AED;
+      border: 1.5px solid #DDD6FE;
+      cursor: pointer;
+    }
+    .btn-export:hover { background: #EDE9FE; }
+
+    .btn-edit {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #DBEAFE;
+      background: #EFF6FF; color: #2563EB; cursor: pointer;
+    }
+    .btn-edit:hover { background: #DBEAFE; }
+
+    .btn-del {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #FEE2E2;
+      background: #FFF5F5; color: #DC2626; cursor: pointer;
+    }
+    .btn-del:hover { background: #FEE2E2; }
+
+    .action-cell { display: flex; gap: 6px; align-items: center; }
+
     #importOverlay {
       display: none; position: fixed; inset: 0;
       background: rgba(0,0,0,0.45); z-index: 9999;
@@ -257,6 +280,7 @@
           <input type="text" id="searchInput" placeholder="Search supplier, bill no…" oninput="filterTable()"/>
         </div>
         <button class="btn btn-outline" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-export" onclick="exportData()">⬇ Export</button>
         <label class="btn btn-import" title="Import CSV/Excel">
           ⬆ Import
           <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(event)"/>
@@ -319,6 +343,7 @@
               <th class="right">Invoice Value (₹)</th>
               <th class="right">Transport (₹)</th>
               <th>Payment Status</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody id="purchaseBody">
@@ -348,7 +373,7 @@
   <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:16px;padding:28px;width:580px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <span style="font-size:16px;font-weight:700;">Add Purchase Entry</span>
+        <span id="modalTitle" style="font-size:16px;font-weight:700;">Add Purchase Entry</span>
         <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;">✕</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
@@ -409,8 +434,8 @@
     const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
-    let data = [], filtered = [], currentPage = 1;
-    const PAGE_SIZE = 10;
+    let data = [], filtered = [], currentPage = 1, editingId = null;
+    const PAGE_SIZE = 30;
 
     async function loadData() {
       document.getElementById('purchaseBody').innerHTML =
@@ -463,6 +488,10 @@
             <td class="td-invoice right">${fmt(r.invoice)}</td>
             <td class="td-tax right">${fmt(r.transport)}</td>
             <td>${statusBadge(r.status)}</td>
+            <td><div class="action-cell">
+              <button class="btn-edit" onclick="editRow('${r.id}')">✏ Edit</button>
+              <button class="btn-del"  onclick="deleteRow('${r.id}')">🗑 Delete</button>
+            </div></td>
           </tr>`).join('');
       }
 
@@ -515,11 +544,46 @@
     }
 
     function addRow() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Purchase Entry';
       document.getElementById('modal').style.display = 'flex';
     }
 
     function closeModal() {
       document.getElementById('modal').style.display = 'none';
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Purchase Entry';
+      ['f_date','f_party','f_vch','f_taxable','f_cgst','f_sgst','f_igst','f_invoice','f_transport']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('f_status').value = 'Pending';
+    }
+
+    function editRow(id) {
+      const r = data.find(x => x.id === id);
+      if (!r) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Purchase Entry';
+      document.getElementById('f_date').value      = r.txn_date || '';
+      document.getElementById('f_party').value     = r.party || '';
+      document.getElementById('f_vch').value       = r.vch || '';
+      document.getElementById('f_taxable').value   = r.taxable || '';
+      document.getElementById('f_cgst').value      = r.cgst || '';
+      document.getElementById('f_sgst').value      = r.sgst || '';
+      document.getElementById('f_igst').value      = r.igst || '';
+      document.getElementById('f_invoice').value   = r.invoice || '';
+      document.getElementById('f_transport').value = r.transport || '';
+      document.getElementById('f_status').value    = r.status || 'Pending';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    async function deleteRow(id) {
+      if (!confirm('Delete this purchase entry? This cannot be undone.')) return;
+      const { error } = await db.from('wholesale_purchases').delete().eq('id', id);
+      if (error) { alert('Delete failed: ' + error.message); return; }
+      data     = data.filter(x => x.id !== id);
+      filtered = filtered.filter(x => x.id !== id);
+      if ((currentPage - 1) * PAGE_SIZE >= filtered.length && currentPage > 1) currentPage--;
+      renderTable();
     }
 
     async function saveRow() {
@@ -537,16 +601,45 @@
         transport: parseFloat(document.getElementById('f_transport').value) || 0,
         status:    document.getElementById('f_status').value || 'Pending',
       };
-      const { data: inserted, error } = await db.from('wholesale_purchases').insert([row]).select();
-      btn.textContent = 'Save Entry'; btn.disabled = false;
-      if (error) { alert('Save failed: ' + error.message); return; }
-      data.unshift(inserted[0]);
-      filtered = [...data];
-      currentPage = 1;
+
+      if (editingId) {
+        const { error } = await db.from('wholesale_purchases').update(row).eq('id', editingId);
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Update failed: ' + error.message); return; }
+        const idx = data.findIndex(x => x.id === editingId);
+        if (idx !== -1) data[idx] = { ...data[idx], ...row };
+        filtered = [...data];
+      } else {
+        const { data: inserted, error } = await db.from('wholesale_purchases').insert([row]).select();
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Save failed: ' + error.message); return; }
+        data.unshift(inserted[0]);
+        filtered = [...data];
+        currentPage = 1;
+      }
       renderTable();
       closeModal();
-      ['f_date','f_party','f_vch','f_taxable','f_cgst','f_sgst','f_igst','f_invoice','f_transport']
-        .forEach(id => document.getElementById(id).value = '');
+    }
+
+    function exportData() {
+      if (!filtered.length) { alert('No records to export.'); return; }
+      const rows = filtered.map((r, i) => ({
+        '#':                   i + 1,
+        'Date':                r.txn_date || '',
+        'Party / Supplier':    r.party || '',
+        'Bill No./Invoice No.': r.vch || '',
+        'Taxable Amount (₹)':  Number(r.taxable) || 0,
+        'CGST (₹)':            Number(r.cgst) || 0,
+        'SGST (₹)':            Number(r.sgst) || 0,
+        'IGST (₹)':            Number(r.igst) || 0,
+        'Invoice Value (₹)':   Number(r.invoice) || 0,
+        'Transport (₹)':       Number(r.transport) || 0,
+        'Payment Status':      r.status || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Purchases');
+      XLSX.writeFile(wb, 'Medwell_Wholesale_Purchases_' + new Date().toISOString().slice(0,10) + '.xlsx');
     }
 
     function col(row, ...keys) {
