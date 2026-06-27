@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Medwell Business Portal</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #F1F5F9;
+      color: #111827;
+      min-height: 100vh;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: linear-gradient(150deg,#EFF6FF 0%,#DBEAFE 50%,#E0F2FE 100%);
+      padding: 36px 32px 28px;
+    }
+
+    .hero-title {
+      font-size: 30px; font-weight: 800; color: #111827;
+      letter-spacing: -0.6px; margin-bottom: 6px;
+    }
+
+    .hero-sub {
+      font-size: 14px; color: #6B7280; margin-bottom: 26px;
+    }
+
+    /* ── BIZ CARDS ── */
+    .biz-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .biz-card {
+      border-radius: 18px;
+      padding: 22px 20px 16px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+      min-height: 170px;
+      transition: transform .2s, box-shadow .2s;
+      border: 1.5px solid transparent;
+    }
+
+    .biz-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+    }
+
+    .biz-card.blue   { background: #DBEAFE; border-color: #BFDBFE; }
+    .biz-card.green  { background: #D1FAE5; border-color: #A7F3D0; }
+    .biz-card.orange { background: #FEF3C7; border-color: #FDE68A; }
+    .biz-card.purple { background: #EDE9FE; border-color: #DDD6FE; }
+
+    .biz-icon {
+      width: 46px; height: 46px; border-radius: 13px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; margin-bottom: 14px;
+    }
+
+    .blue   .biz-icon { background: #2563EB; }
+    .green  .biz-icon { background: #10B981; }
+    .orange .biz-icon { background: #F59E0B; }
+    .purple .biz-icon { background: #8B5CF6; }
+
+    .biz-name {
+      font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px;
+    }
+
+    .biz-desc {
+      font-size: 12px; color: #6B7280; line-height: 1.5; max-width: 130px;
+    }
+
+    .biz-illus {
+      position: absolute;
+      right: 10px; bottom: 10px;
+      font-size: 70px; line-height: 1;
+      opacity: 0.22;
+      pointer-events: none;
+    }
+
+    .biz-arrow {
+      position: absolute;
+      bottom: 16px; right: 16px;
+      width: 30px; height: 30px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 15px; font-weight: 700;
+      opacity: 0; transition: opacity .2s;
+    }
+
+    .blue   .biz-arrow { background: #2563EB; color: white; }
+    .green  .biz-arrow { background: #10B981; color: white; }
+    .orange .biz-arrow { background: #F59E0B; color: white; }
+    .purple .biz-arrow { background: #8B5CF6; color: white; }
+
+    .biz-card:hover .biz-arrow { opacity: 1; }
+    .biz-card:hover .biz-illus { opacity: 0.35; }
+
+    /* ── ANALYTICS ── */
+    .analytics {
+      padding: 28px 32px 36px;
+    }
+
+    .analytics-hdr { margin-bottom: 20px; }
+
+    .analytics-hdr h2 {
+      font-size: 18px; font-weight: 700; color: #111827;
+    }
+
+    .analytics-hdr p {
+      font-size: 12px; color: #9CA3AF; margin-top: 2px;
+    }
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.15fr 1.5fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    /* stat cards */
+    .stat-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
+    }
+
+    .stat-card {
+      background: white; border-radius: 14px; padding: 18px 16px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+
+    .stat-top {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .stat-label {
+      font-size: 12px; color: #9CA3AF; font-weight: 500;
+    }
+
+    .stat-badge {
+      width: 30px; height: 30px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; flex-shrink: 0;
+    }
+
+    .stat-value {
+      font-size: 20px; font-weight: 800; color: #111827;
+      letter-spacing: -0.5px; margin-bottom: 6px;
+    }
+
+    .stat-trend {
+      font-size: 11px; color: #9CA3AF;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    .up { color: #10B981; }
+
+    /* donut card */
+    .panel {
+      background: white; border-radius: 14px; padding: 9px 11px 5px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+    }
+
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .panel-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .panel-sub   { font-size: 11px; color: #9CA3AF; margin-bottom: 10px; }
+    .dots-menu   { font-size: 18px; color: #D1D5DB; cursor: pointer; }
+
+    .donut-row {
+      display: flex; align-items: center; gap: 28px;
+    }
+
+    .donut-wrap { width: 200px; height: 200px; flex-shrink: 0; }
+
+    .legend { flex: 1; }
+
+    .leg-item {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #374151; margin-bottom: 7px; font-weight: 500;
+    }
+
+    .leg-dot {
+      width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
+    }
+
+    /* right col */
+    .right-col { display: flex; flex-direction: column; gap: 16px; }
+
+    .line-card { background: white; border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
+
+    .line-hdr {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
+    }
+
+    .line-select {
+      font-size: 11px; color: #6B7280;
+      background: #F9FAFB; border: 1px solid #E5E7EB;
+      border-radius: 8px; padding: 4px 10px; cursor: pointer; outline: none;
+    }
+
+
+    @media (max-width: 1100px) {
+      .biz-grid { grid-template-columns: repeat(2, 1fr); }
+      .analytics-grid { grid-template-columns: 1fr 1fr; }
+      .right-col { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 680px) {
+      .biz-grid { grid-template-columns: 1fr 1fr; }
+      .analytics-grid { grid-template-columns: 1fr; }
+      nav { padding: 0 16px; gap: 14px; }
+      .hero { padding: 24px 16px 20px; }
+      .analytics { padding: 20px 16px; }
+      .search-wrap { width: 140px; }
+    }
+  </style>
+</head>
+<body>
+
+
+<!-- ══ HERO ══ -->
+<div class="hero">
+  <h1 class="hero-title">Welcome to Medwell Business Portal</h1>
+  <p class="hero-sub">Manage all your healthcare businesses from one intelligent dashboard.</p>
+
+  <div class="biz-grid">
+
+    <!-- Wholesale -->
+    <a class="biz-card blue" href="wholesale.html">
+      <div class="biz-icon">🏭</div>
+      <div class="biz-name">Medwell Wholesale</div>
+      <div class="biz-desc">Manage distributors, bulk orders, inventory and billing.</div>
+      <div class="biz-illus">📦</div>
+      <div class="biz-arrow">›</div>
+    </a>
+
+    <!-- Retail -->
+    <a class="biz-card green" href="retail.html">
+      <div class="biz-icon">🏪</div>
+      <div class="biz-name">Medwell Retail</div>
+      <div class="biz-desc">Retail sales, POS, customer management and stock.</div>
+      <div class="biz-illus">🏬</div>
+      <div class="biz-arrow">›</div>
+    </a>
+
+    <!-- Makkal -->
+    <a class="biz-card orange" href="makkal.html">
+      <div class="biz-icon">💊</div>
+      <div class="biz-name">Makkal Marunthagam</div>
+      <div class="biz-desc">Government medicine distribution and public healthcare.</div>
+      <div class="biz-illus">👨‍⚕️</div>
+      <div class="biz-arrow">›</div>
+    </a>
+
+    <!-- Lab -->
+    <a class="biz-card purple" href="lab.html">
+      <div class="biz-icon">🔬</div>
+      <div class="biz-name">Medwell Lab</div>
+      <div class="biz-desc">Diagnostics, test reports, appointments and lab management.</div>
+      <div class="biz-illus">🧪</div>
+      <div class="biz-arrow">›</div>
+    </a>
+
+  </div>
+</div>
+
+<!-- ══ ANALYTICS ══ -->
+<div class="analytics">
+  <div class="analytics-hdr">
+    <h2>Dashboard Analytics Section</h2>
+    <p>Professional analytics</p>
+  </div>
+
+  <div class="analytics-grid">
+
+    <!-- Stat cards 2×2 -->
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">Today's Sales</div>
+          <div class="stat-badge" style="background:#EFF6FF">🛒</div>
+        </div>
+        <div class="stat-value">₹2,353.8</div>
+        <div class="stat-trend up">↑ &nbsp;Trend &nbsp;📈</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">Monthly Revenue</div>
+          <div class="stat-badge" style="background:#ECFDF5">💵</div>
+        </div>
+        <div class="stat-value">₹1,000K</div>
+        <div class="stat-trend up">↑ &nbsp;Trend &nbsp;📈</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">Total Customers</div>
+          <div class="stat-badge" style="background:#FEF3C7">👥</div>
+        </div>
+        <div class="stat-value">1,265</div>
+        <div class="stat-trend">Modern shadows</div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-top">
+          <div class="stat-label">Pending Orders</div>
+          <div class="stat-badge" style="background:#F5F3FF">📋</div>
+        </div>
+        <div class="stat-value">1 Orders</div>
+        <div class="stat-trend">Modern shadows</div>
+      </div>
+    </div>
+
+    <!-- Donut chart -->
+    <div class="panel">
+      <div class="panel-hdr">
+        <span class="panel-title">Cash in Hand</span>
+      </div>
+      <div class="panel-sub">Professional legend</div>
+      <div class="donut-row">
+        <div class="donut-wrap">
+          <canvas id="donutChart"></canvas>
+        </div>
+        <div class="legend">
+          <div class="leg-item"><span class="leg-dot" style="background:#2563EB"></span>Cash (45%)</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#10B981"></span>UPI (30%)</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#F59E0B"></span>Bank Transfer (15%)</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#8B5CF6"></span>Credit (10%)</div>
+          <div class="leg-item"><span class="leg-dot" style="background:#F87171"></span>Other (7%)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right column -->
+    <div class="right-col">
+
+      <!-- Line chart -->
+      <div class="line-card">
+        <div class="line-hdr">
+          <span class="panel-title">Sales Overview</span>
+          <select class="line-select">
+            <option>Weekly Sales</option>
+            <option>Monthly Sales</option>
+          </select>
+        </div>
+        <canvas id="lineChart" height="110"></canvas>
+      </div>
+
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // Donut
+  new Chart(document.getElementById('donutChart'), {
+    type: 'doughnut',
+    data: {
+      labels: ['Cash','UPI','Bank Transfer','Credit','Other'],
+      datasets: [{
+        data: [45, 30, 15, 10, 7],
+        backgroundColor: ['#2563EB','#10B981','#F59E0B','#8B5CF6','#F87171'],
+        borderWidth: 0,
+        hoverOffset: 6
+      }]
+    },
+    options: {
+      cutout: '68%',
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + '%' } } },
+      responsive: true,
+      maintainAspectRatio: true
+    }
+  });
+
+  // Column chart
+  new Chart(document.getElementById('lineChart'), {
+    type: 'bar',
+    data: {
+      labels: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
+      datasets: [
+        {
+          label: 'Revenue',
+          data: [2000,4000,6000,8000,10000,12000,14000],
+          backgroundColor: 'rgba(37,99,235,0.85)',
+          borderRadius: 5,
+          borderSkipped: false
+        },
+        {
+          label: 'Sales',
+          data: [3000,5000,7000,9000,11000,13000,15000],
+          backgroundColor: 'rgba(16,185,129,0.85)',
+          borderRadius: 5,
+          borderSkipped: false
+        }
+      ]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          grid: { color: '#F3F4F6' },
+          beginAtZero: true,
+          ticks: {
+            font: { size: 10 },
+            color: '#9CA3AF',
+            stepSize: 2000,
+            callback: v => v.toLocaleString('en-IN')
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 10 }, color: '#9CA3AF' }
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: true
+    }
+  });
+</script>
+</body>
+</html>
