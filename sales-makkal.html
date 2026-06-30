@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Sales – Makkal Marunthagam</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body { font-family:'Segoe UI',system-ui,-apple-system,sans-serif; background:#F0FDF4; color:#111827; min-height:100vh; }
+
+    /* Top bar */
+    .topbar {
+      background:#fff; border-bottom:1px solid #D1FAE5;
+      padding:0 32px; height:60px;
+      display:flex; align-items:center; gap:14px;
+      position:sticky; top:0; z-index:50;
+      box-shadow:0 1px 6px rgba(16,185,129,0.06);
+    }
+    .back-btn {
+      display:flex; align-items:center; gap:6px;
+      background:none; border:1.5px solid #E5E7EB; border-radius:8px;
+      padding:6px 14px; font-size:13px; font-weight:600; color:#374151;
+      cursor:pointer; text-decoration:none; transition:background .15s;
+    }
+    .back-btn:hover { background:#F9FAFB; }
+    .divider { width:1px; height:24px; background:#E5E7EB; }
+    .topbar-icon { width:36px; height:36px; border-radius:10px; background:#ECFDF5; display:flex; align-items:center; justify-content:center; font-size:18px; }
+    .topbar-info { flex:1; }
+    .topbar-name { font-size:16px; font-weight:700; color:#111827; }
+    .topbar-sub  { font-size:11px; color:#9CA3AF; text-transform:uppercase; letter-spacing:.6px; }
+    .topbar-badge { background:#ECFDF5; color:#059669; font-size:11px; font-weight:700; padding:4px 12px; border-radius:20px; border:1px solid #A7F3D0; }
+
+    /* Breadcrumb */
+    .breadcrumb {
+      padding:10px 32px; font-size:12px; color:#9CA3AF;
+      display:flex; align-items:center; gap:6px;
+      border-bottom:1px solid #F3F4F6; background:#fff;
+    }
+    .breadcrumb a { color:#6B7280; text-decoration:none; }
+    .breadcrumb a:hover { color:#059669; }
+    .breadcrumb .sep { color:#D1D5DB; }
+    .breadcrumb .current { color:#111827; font-weight:600; }
+
+    /* Body */
+    .body { padding:24px 32px; }
+
+    /* Toolbar */
+    .toolbar { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; gap:12px; flex-wrap:wrap; }
+    .toolbar-left  { display:flex; align-items:center; gap:12px; }
+    .toolbar-right { display:flex; align-items:center; gap:8px; }
+    .page-title { font-size:18px; font-weight:800; color:#111827; }
+    .record-count { background:#ECFDF5; color:#059669; font-size:12px; font-weight:600; padding:3px 10px; border-radius:20px; border:1px solid #A7F3D0; }
+    .search-box { display:flex; align-items:center; gap:8px; background:#F9FAFB; border:1.5px solid #E5E7EB; border-radius:8px; padding:7px 12px; width:220px; }
+    .search-box input { border:none; background:none; outline:none; font-size:13px; color:#111827; width:100%; }
+
+    .btn { padding:8px 16px; border-radius:8px; font-size:13px; font-weight:600; cursor:pointer; border:none; display:inline-flex; align-items:center; gap:6px; white-space:nowrap; }
+    .btn-primary { background:#059669; color:#fff; }
+    .btn-primary:hover { background:#047857; }
+    .btn-outline  { background:#fff; color:#374151; border:1.5px solid #E5E7EB; }
+    .btn-outline:hover  { background:#F9FAFB; }
+    .btn-export   { background:#F5F3FF; color:#7C3AED; border:1.5px solid #DDD6FE; cursor:pointer; }
+    .btn-export:hover   { background:#EDE9FE; }
+    .btn-import   { background:#F0FDF4; color:#15803D; border:1.5px solid #BBF7D0; cursor:pointer; }
+    .btn-import:hover   { background:#DCFCE7; }
+    .btn-edit { padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1.5px solid #A7F3D0; background:#ECFDF5; color:#059669; cursor:pointer; }
+    .btn-edit:hover { background:#D1FAE5; }
+    .btn-del  { padding:4px 10px; font-size:11px; font-weight:600; border-radius:6px; border:1.5px solid #FEE2E2; background:#FFF5F5; color:#DC2626; cursor:pointer; }
+    .btn-del:hover  { background:#FEE2E2; }
+    .action-cell { display:flex; gap:6px; align-items:center; }
+
+    /* Summary cards */
+    .summary-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+    .sum-card { background:#fff; border-radius:12px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,0.05); border-left:4px solid transparent; }
+    .sum-card.green  { border-left-color:#059669; }
+    .sum-card.blue   { border-left-color:#2563EB; }
+    .sum-card.orange { border-left-color:#F59E0B; }
+    .sum-card.purple { border-left-color:#7C3AED; }
+    .sum-label { font-size:11px; color:#9CA3AF; font-weight:600; text-transform:uppercase; letter-spacing:.5px; margin-bottom:6px; }
+    .sum-value { font-size:20px; font-weight:800; color:#111827; letter-spacing:-.5px; }
+    .sum-sub   { font-size:11px; color:#9CA3AF; margin-top:3px; }
+
+    /* Table */
+    .table-card { background:#fff; border-radius:14px; box-shadow:0 1px 6px rgba(0,0,0,0.06); overflow:hidden; }
+    .table-scroll { overflow-x:auto; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead { background:#F0FDF4; }
+    th { padding:11px 14px; text-align:left; font-size:11px; font-weight:700; color:#6B7280; text-transform:uppercase; letter-spacing:.5px; border-bottom:1.5px solid #D1FAE5; white-space:nowrap; }
+    td { padding:11px 14px; border-bottom:1px solid #F3F4F6; color:#374151; vertical-align:middle; white-space:nowrap; }
+    tr:last-child td { border-bottom:none; }
+    tr:hover td { background:#FAFAFA; }
+    .right { text-align:right; }
+    .empty-row td { text-align:center; padding:48px; color:#9CA3AF; font-size:14px; }
+
+    /* Pagination */
+    .pagination { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-top:1px solid #F3F4F6; font-size:12px; color:#9CA3AF; }
+    .page-btns { display:flex; gap:4px; flex-wrap:wrap; }
+    .page-btn { width:30px; height:30px; border-radius:7px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; cursor:pointer; color:#6B7280; }
+    .page-btn:hover { background:#F3F4F6; }
+    .page-btn.active { background:#059669; color:#fff; }
+
+    /* Import overlay */
+    #importOverlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:9999; align-items:center; justify-content:center; }
+    #importOverlay.show { display:flex; }
+    .import-box { background:#fff; border-radius:16px; padding:32px 36px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.2); text-align:center; }
+    .import-box h3 { font-size:16px; font-weight:700; color:#111827; margin-bottom:6px; }
+    .import-box p  { font-size:13px; color:#6B7280; margin-bottom:20px; }
+    .prog-track { background:#E5E7EB; border-radius:99px; height:10px; overflow:hidden; margin-bottom:10px; }
+    .prog-bar   { height:100%; background:linear-gradient(90deg,#059669,#34D399); border-radius:99px; transition:width .3s; width:0%; }
+    .prog-label { font-size:12px; color:#6B7280; }
+
+    .f-input { width:100%; padding:9px 12px; border:1.5px solid #E5E7EB; border-radius:8px; font-size:13px; outline:none; background:#fff; font-family:inherit; }
+    .f-input:focus { border-color:#059669; }
+    .f-label { font-size:12px; color:#6B7280; font-weight:600; display:block; margin-bottom:5px; }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a class="back-btn" href="makkal.html">← Back</a>
+    <div class="divider"></div>
+    <div class="topbar-icon">📈</div>
+    <div class="topbar-info">
+      <div class="topbar-name">Sales</div>
+      <div class="topbar-sub">Makkal Marunthagam</div>
+    </div>
+    <span class="topbar-badge">MKL</span>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="index.html">Dashboard</a>
+    <span class="sep">›</span>
+    <a href="makkal.html">Makkal Marunthagam</a>
+    <span class="sep">›</span>
+    <span class="current">Sales</span>
+  </div>
+
+  <div class="body">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="page-title">Sales Register</div>
+        <span class="record-count" id="record-count">0 records</span>
+      </div>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search patient, invoice…" oninput="filterTable()"/>
+        </div>
+        <button class="btn btn-outline" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-export" onclick="exportData()">⬇ Export</button>
+        <label class="btn btn-import" title="Import CSV/Excel">
+          ⬆ Import
+          <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(event)"/>
+        </label>
+        <button class="btn btn-primary" onclick="addRow()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-row">
+      <div class="sum-card green">
+        <div class="sum-label">Total Amount</div>
+        <div class="sum-value" id="totalAmount">₹0.00</div>
+        <div class="sum-sub">All entries</div>
+      </div>
+      <div class="sum-card blue">
+        <div class="sum-label">Paid</div>
+        <div class="sum-value" id="totalPaid">₹0.00</div>
+        <div class="sum-sub">Status: Paid</div>
+      </div>
+      <div class="sum-card orange">
+        <div class="sum-label">Pending</div>
+        <div class="sum-value" id="totalPending">0</div>
+        <div class="sum-sub">Unpaid entries</div>
+      </div>
+      <div class="sum-card purple">
+        <div class="sum-label">Total Entries</div>
+        <div class="sum-value" id="totalEntries">0</div>
+        <div class="sum-sub">Filtered records</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-card">
+      <div class="table-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Invoice No.</th>
+              <th>Patient Name</th>
+              <th>Phone Number</th>
+              <th class="right">Amount (₹)</th>
+              <th>Mode</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <span id="paginationInfo">Showing 0–0 of 0</span>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Import overlay -->
+  <div id="importOverlay">
+    <div class="import-box">
+      <h3>Importing Records</h3>
+      <p id="importMsg">Reading file…</p>
+      <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-label" id="progLabel">0 / 0 rows</div>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;width:480px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
+        <span id="modalTitle" style="font-size:16px;font-weight:700;color:#111827;">Add Sales Entry</span>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;">✕</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+
+        <div>
+          <label class="f-label">Date</label>
+          <input id="f_date" type="date" class="f-input"/>
+        </div>
+
+        <div>
+          <label class="f-label">Invoice No.</label>
+          <input id="f_invoice" type="text" placeholder="DC." class="f-input"/>
+        </div>
+
+        <div>
+          <label class="f-label">Patient Name</label>
+          <input id="f_patient" type="text" placeholder="Enter patient name" class="f-input"/>
+        </div>
+
+        <div>
+          <label class="f-label">Phone Number</label>
+          <input id="f_phone" type="tel" placeholder="Enter phone number" class="f-input"/>
+        </div>
+
+        <div>
+          <label class="f-label">Amount (₹)</label>
+          <input id="f_amount" type="number" step="0.01" placeholder="0.00" class="f-input"/>
+        </div>
+
+        <div>
+          <label class="f-label">Payment Mode</label>
+          <select id="f_mode" class="f-input">
+            <option value="Cash">Cash</option>
+            <option value="UPI">UPI</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="f-label">Status</label>
+          <select id="f_status" class="f-input">
+            <option value="Paid">Paid</option>
+            <option value="Pending">Pending</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:22px;">
+        <button onclick="closeModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="saveRow()" style="padding:9px 20px;background:#059669;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPA_URL = 'https://ascolgmqofzoaqukkhvk.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
+    const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    let data = [], filtered = [], currentPage = 1, editingId = null;
+    const PAGE_SIZE = 30;
+
+    async function loadData() {
+      document.getElementById('salesBody').innerHTML =
+        '<tr class="empty-row"><td colspan="9" style="color:#9CA3AF">Loading…</td></tr>';
+      const { data: rows, error } = await db
+        .from('makkal_sales')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) {
+        document.getElementById('salesBody').innerHTML =
+          `<tr class="empty-row"><td colspan="9" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+        return;
+      }
+      data = rows || [];
+      filtered = [...data];
+      currentPage = 1;
+      renderTable();
+    }
+
+    function fmt(n) {
+      return (!n || n == 0) ? '—' : '₹' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function statusBadge(s) {
+      const map = {
+        'Paid':    { bg:'#D1FAE5', color:'#059669' },
+        'Pending': { bg:'#FEF3C7', color:'#D97706' },
+        'Partial': { bg:'#DBEAFE', color:'#2563EB' },
+      };
+      const c = map[s] || { bg:'#F3F4F6', color:'#6B7280' };
+      return `<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${c.bg};color:${c.color}">${s || '—'}</span>`;
+    }
+
+    function renderTable() {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, filtered.length);
+      const slice = filtered.slice(start, end);
+      const tbody = document.getElementById('salesBody');
+
+      if (!slice.length) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No records found</td></tr>';
+      } else {
+        tbody.innerHTML = slice.map((r, i) => `
+          <tr>
+            <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
+            <td>${r.txn_date || '—'}</td>
+            <td style="font-weight:600;color:#059669">${r.invoice || '—'}</td>
+            <td style="font-weight:600">${r.patient_name || '—'}</td>
+            <td>${r.phone || '—'}</td>
+            <td class="right" style="font-weight:700;color:#111827">${fmt(r.amount)}</td>
+            <td>${r.mode || '—'}</td>
+            <td>${statusBadge(r.status)}</td>
+            <td><div class="action-cell">
+              <button class="btn-edit" onclick="editRow('${r.id}')">✏ Edit</button>
+              <button class="btn-del"  onclick="deleteRow('${r.id}')">🗑 Delete</button>
+            </div></td>
+          </tr>`).join('');
+      }
+
+      document.getElementById('paginationInfo').textContent =
+        `Showing ${filtered.length ? start+1 : 0}–${end} of ${filtered.length}`;
+      document.getElementById('record-count').textContent = filtered.length + ' records';
+      renderPagination();
+      updateSummary();
+    }
+
+    function renderPagination() {
+      const total = Math.ceil(filtered.length / PAGE_SIZE);
+      const btns  = document.getElementById('pageBtns');
+      btns.innerHTML = '';
+      for (let p = 1; p <= total; p++) {
+        const b = document.createElement('div');
+        b.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = p;
+        b.onclick = () => { currentPage = p; renderTable(); };
+        btns.appendChild(b);
+      }
+    }
+
+    function updateSummary() {
+      let total = 0, paid = 0, pending = 0;
+      filtered.forEach(r => {
+        const a = Number(r.amount) || 0;
+        total += a;
+        if (r.status === 'Paid') paid += a;
+        if (r.status === 'Pending' || r.status === 'Partial') pending++;
+      });
+      document.getElementById('totalAmount').textContent  = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits:2});
+      document.getElementById('totalPaid').textContent    = '₹' + paid.toLocaleString('en-IN',  {minimumFractionDigits:2});
+      document.getElementById('totalPending').textContent = pending;
+      document.getElementById('totalEntries').textContent = filtered.length;
+    }
+
+    function filterTable() {
+      const q = document.getElementById('searchInput').value.toLowerCase();
+      filtered = data.filter(r =>
+        (r.patient_name || '').toLowerCase().includes(q) ||
+        (r.invoice      || '').toLowerCase().includes(q) ||
+        (r.phone        || '').toLowerCase().includes(q) ||
+        (r.txn_date     || '').toLowerCase().includes(q) ||
+        (r.mode         || '').toLowerCase().includes(q) ||
+        (r.status       || '').toLowerCase().includes(q)
+      );
+      currentPage = 1;
+      renderTable();
+    }
+
+    function addRow() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Sales Entry';
+      document.getElementById('f_invoice').value = 'DC.';
+      document.getElementById('modal').style.display = 'flex';
+      document.getElementById('f_date').focus();
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Sales Entry';
+      ['f_date','f_invoice','f_patient','f_phone','f_amount'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('f_mode').value   = 'Cash';
+      document.getElementById('f_status').value = 'Paid';
+    }
+
+    function editRow(id) {
+      const r = data.find(x => x.id === id);
+      if (!r) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent  = 'Edit Sales Entry';
+      document.getElementById('f_date').value    = r.txn_date     || '';
+      document.getElementById('f_invoice').value = r.invoice      || '';
+      document.getElementById('f_patient').value = r.patient_name || '';
+      document.getElementById('f_phone').value   = r.phone        || '';
+      document.getElementById('f_amount').value  = r.amount       || '';
+      document.getElementById('f_mode').value    = r.mode         || 'Cash';
+      document.getElementById('f_status').value  = r.status       || 'Paid';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    async function deleteRow(id) {
+      if (!confirm('Delete this entry? This cannot be undone.')) return;
+      const { error } = await db.from('makkal_sales').delete().eq('id', id);
+      if (error) { alert('Delete failed: ' + error.message); return; }
+      data     = data.filter(x => x.id !== id);
+      filtered = filtered.filter(x => x.id !== id);
+      if ((currentPage - 1) * PAGE_SIZE >= filtered.length && currentPage > 1) currentPage--;
+      renderTable();
+    }
+
+    async function saveRow() {
+      const btn = document.querySelector('[onclick="saveRow()"]');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      const row = {
+        txn_date:     document.getElementById('f_date').value    || null,
+        invoice:      document.getElementById('f_invoice').value || null,
+        patient_name: document.getElementById('f_patient').value || null,
+        phone:        document.getElementById('f_phone').value   || null,
+        amount:       parseFloat(document.getElementById('f_amount').value) || 0,
+        mode:         document.getElementById('f_mode').value    || 'Cash',
+        status:       document.getElementById('f_status').value  || 'Paid',
+      };
+
+      if (editingId) {
+        const { error } = await db.from('makkal_sales').update(row).eq('id', editingId);
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Update failed: ' + error.message); return; }
+        const idx = data.findIndex(x => x.id === editingId);
+        if (idx !== -1) data[idx] = { ...data[idx], ...row };
+        filtered = [...data];
+      } else {
+        const { data: inserted, error } = await db.from('makkal_sales').insert([row]).select();
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Save failed: ' + error.message); return; }
+        data.unshift(inserted[0]);
+        filtered = [...data];
+        currentPage = 1;
+      }
+      renderTable();
+      closeModal();
+    }
+
+    function exportData() {
+      if (!filtered.length) { alert('No records to export.'); return; }
+      const rows = filtered.map((r, i) => ({
+        '#':             i + 1,
+        'Date':          r.txn_date     || '',
+        'Invoice No.':   r.invoice      || '',
+        'Patient Name':  r.patient_name || '',
+        'Phone Number':  r.phone        || '',
+        'Amount (₹)':    Number(r.amount) || 0,
+        'Payment Mode':  r.mode         || '',
+        'Status':        r.status       || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Sales');
+      XLSX.writeFile(wb, 'Makkal_Marunthagam_Sales_' + new Date().toISOString().slice(0,10) + '.xlsx');
+    }
+
+    /* ── Import ── */
+    function col(row, ...keys) {
+      for (const k of keys)
+        for (const rk of Object.keys(row))
+          if (rk.trim().toLowerCase() === k.toLowerCase() && row[rk] != null && row[rk] !== '') return row[rk];
+      return null;
+    }
+    function toStr(v) {
+      if (v == null || v === '') return null;
+      if (v instanceof Date) return v.toLocaleDateString('en-IN', {day:'2-digit',month:'2-digit',year:'numeric'});
+      return String(v).trim() || null;
+    }
+    function toNum(v) {
+      if (v == null || v === '') return 0;
+      const n = parseFloat(String(v).replace(/[₹,\s]/g,''));
+      return isNaN(n) ? 0 : n;
+    }
+    function setProgress(done, total, msg) {
+      document.getElementById('progBar').style.width   = (total ? Math.round(done/total*100) : 0) + '%';
+      document.getElementById('progLabel').textContent = done + ' / ' + total + ' rows';
+      if (msg) document.getElementById('importMsg').textContent = msg;
+    }
+
+    function importFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      e.target.value = '';
+      const overlay = document.getElementById('importOverlay');
+      overlay.classList.add('show');
+      setProgress(0, 0, 'Reading file…');
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const wb   = XLSX.read(evt.target.result, { type:'array', cellDates:true });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+          if (!rows.length) { overlay.classList.remove('show'); alert('No data rows found.'); return; }
+
+          const mapped = rows.map(r => ({
+            txn_date:     toStr(col(r,'Date','date','Txn Date')),
+            invoice:      toStr(col(r,'Invoice No.','Invoice','invoice')),
+            patient_name: toStr(col(r,'Patient Name','Patient','patient_name')),
+            phone:        toStr(col(r,'Phone Number','Phone','phone')),
+            amount:       toNum(col(r,'Amount','Amount (₹)','amount')),
+            mode:         toStr(col(r,'Payment Mode','Mode','mode')) || 'Cash',
+            status:       toStr(col(r,'Status','status')) || 'Paid',
+          }));
+
+          const BATCH = 50; let inserted = 0; const total = mapped.length;
+          setProgress(0, total, 'Uploading records…');
+          for (let i = 0; i < total; i += BATCH) {
+            const chunk = mapped.slice(i, i + BATCH);
+            const { error } = await db.from('makkal_sales').insert(chunk);
+            if (error) { overlay.classList.remove('show'); alert('Upload failed at row '+(i+1)+':\n'+error.message); return; }
+            inserted += chunk.length;
+            setProgress(inserted, total, 'Uploading records…');
+          }
+          overlay.classList.remove('show');
+          alert('✅ ' + inserted + ' records imported successfully!');
+          loadData();
+        } catch(err) {
+          overlay.classList.remove('show');
+          alert('Failed to read file:\n' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
