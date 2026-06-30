@@ -50,12 +50,26 @@ create table if not exists wholesale_expenses (
   remarks     text
 );
 
+-- ── Retail Sales Table ──
+create table if not exists retail_sales (
+  id           uuid default gen_random_uuid() primary key,
+  created_at   timestamptz default now(),
+  txn_date     text,
+  invoice      text,
+  patient_name text,
+  phone        text,
+  amount       numeric default 0,
+  status       text default 'Paid'
+);
+
 -- ── Enable Row Level Security ──
 alter table wholesale_sales     enable row level security;
 alter table wholesale_purchases enable row level security;
 alter table wholesale_expenses  enable row level security;
+alter table retail_sales        enable row level security;
 
 -- ── Allow full access via anon key (adjust as needed) ──
 create policy "Allow all" on wholesale_sales     for all using (true) with check (true);
 create policy "Allow all" on wholesale_purchases for all using (true) with check (true);
 create policy "Allow all" on wholesale_expenses  for all using (true) with check (true);
+create policy "Allow all" on retail_sales        for all using (true) with check (true);
