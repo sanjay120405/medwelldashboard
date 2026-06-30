@@ -203,7 +203,6 @@
               <th>For</th>
               <th>Amount From</th>
               <th>Amount To</th>
-              <th>Notes</th>
               <th>Remarks</th>
               <th>Actions</th>
             </tr>
@@ -298,12 +297,6 @@
           </select>
         </div>
 
-        <!-- Notes -->
-        <div>
-          <label class="f-label">Notes (optional)</label>
-          <input id="f_notes" type="text" placeholder="Short note…" class="f-input"/>
-        </div>
-
         <!-- Remarks -->
         <div>
           <label class="f-label">Remarks</label>
@@ -388,7 +381,6 @@
             </td>
             <td>${badge(r.amount_from, FROM_COLORS)}</td>
             <td>${badge(r.amount_to, TO_COLORS)}</td>
-            <td style="color:#9CA3AF;font-size:12px">${r.notes || '—'}</td>
             <td style="color:#374151;max-width:180px;white-space:normal;font-size:12px">${r.remarks || '—'}</td>
             <td><div class="action-cell">
               <button class="btn-edit" onclick="editRow('${r.id}')">✏ Edit</button>
@@ -482,7 +474,6 @@
       document.getElementById('sub_for_wrap').style.display = 'none';
       document.getElementById('f_from').value    = '';
       document.getElementById('f_to').value      = '';
-      document.getElementById('f_notes').value   = '';
       document.getElementById('f_remarks').value = '';
     }
 
@@ -495,7 +486,6 @@
       document.getElementById('f_for').value     = r.exp_for     || '';
       document.getElementById('f_from').value    = r.amount_from || '';
       document.getElementById('f_to').value      = r.amount_to   || '';
-      document.getElementById('f_notes').value   = r.notes       || '';
       document.getElementById('f_remarks').value = r.remarks     || '';
       // trigger sub-dropdown then set value
       handleForChange();
@@ -522,7 +512,6 @@
         sub_for:     document.getElementById('f_sub_for').value || null,
         amount_from: document.getElementById('f_from').value    || null,
         amount_to:   document.getElementById('f_to').value      || null,
-        notes:       document.getElementById('f_notes').value   || null,
         remarks:     document.getElementById('f_remarks').value || null,
       };
 
@@ -554,7 +543,6 @@
         'Sub For':     r.sub_for     || '',
         'Amount From': r.amount_from || '',
         'Amount To':   r.amount_to   || '',
-        'Notes':       r.notes       || '',
         'Remarks':     r.remarks     || '',
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -608,7 +596,6 @@
             sub_for:     toStr(col(r,'Sub For','sub_for','Employee','sub for')),
             amount_from: toStr(col(r,'Amount From','amount_from','From','from')),
             amount_to:   toStr(col(r,'Amount To','amount_to','To','to')),
-            notes:       toStr(col(r,'Notes','notes')),
             remarks:     toStr(col(r,'Remarks','remarks')),
           }));
 
