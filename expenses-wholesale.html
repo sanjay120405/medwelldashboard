@@ -199,6 +199,7 @@
           <thead>
             <tr>
               <th>#</th>
+              <th>Date</th>
               <th class="right">Amount (₹)</th>
               <th>For</th>
               <th>Amount From</th>
@@ -260,6 +261,7 @@
             <option>Commission</option>
             <option>Promotion</option>
             <option>Loan</option>
+            <option>General</option>
           </select>
         </div>
 
@@ -295,6 +297,12 @@
             <option>Makkal Marunthagam</option>
             <option>Medwell Lab</option>
           </select>
+        </div>
+
+        <!-- Date & Remarks -->
+        <div>
+          <label class="f-label">Date</label>
+          <input id="f_date" type="date" class="f-input"/>
         </div>
 
         <!-- Remarks -->
@@ -374,6 +382,7 @@
         tbody.innerHTML = slice.map((r, i) => `
           <tr>
             <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
+            <td>${r.txn_date || '—'}</td>
             <td class="right" style="font-weight:700;color:#111827;font-size:14px">${fmt(r.amount)}</td>
             <td>
               <span style="font-weight:600;color:#374151">${r.exp_for || '—'}</span>
@@ -447,6 +456,7 @@
     function filterTable() {
       const q = document.getElementById('searchInput').value.toLowerCase();
       filtered = data.filter(r =>
+        (r.txn_date || '').toLowerCase().includes(q) ||
         (r.exp_for || '').toLowerCase().includes(q) ||
         (r.sub_for || '').toLowerCase().includes(q) ||
         (r.amount_from || '').toLowerCase().includes(q) ||
@@ -474,6 +484,7 @@
       document.getElementById('sub_for_wrap').style.display = 'none';
       document.getElementById('f_from').value    = '';
       document.getElementById('f_to').value      = '';
+      document.getElementById('f_date').value    = '';
       document.getElementById('f_remarks').value = '';
     }
 
@@ -486,6 +497,7 @@
       document.getElementById('f_for').value     = r.exp_for     || '';
       document.getElementById('f_from').value    = r.amount_from || '';
       document.getElementById('f_to').value      = r.amount_to   || '';
+      document.getElementById('f_date').value    = r.txn_date    || '';
       document.getElementById('f_remarks').value = r.remarks     || '';
       // trigger sub-dropdown then set value
       handleForChange();
@@ -512,6 +524,7 @@
         sub_for:     document.getElementById('f_sub_for').value || null,
         amount_from: document.getElementById('f_from').value    || null,
         amount_to:   document.getElementById('f_to').value      || null,
+        txn_date:    document.getElementById('f_date').value    || null,
         remarks:     document.getElementById('f_remarks').value || null,
       };
 
@@ -543,6 +556,7 @@
         'Sub For':     r.sub_for     || '',
         'Amount From': r.amount_from || '',
         'Amount To':   r.amount_to   || '',
+        'Date':        r.txn_date    || '',
         'Remarks':     r.remarks     || '',
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
@@ -596,6 +610,7 @@
             sub_for:     toStr(col(r,'Sub For','sub_for','Employee','sub for')),
             amount_from: toStr(col(r,'Amount From','amount_from','From','from')),
             amount_to:   toStr(col(r,'Amount To','amount_to','To','to')),
+            txn_date:    toStr(col(r,'Date','date','Txn Date')),
             remarks:     toStr(col(r,'Remarks','remarks')),
           }));
 
