@@ -576,13 +576,13 @@
           if (!rows.length) { overlay.classList.remove('show'); alert('No data rows found.'); return; }
 
           const mapped = rows.map(r => ({
-            txn_date:     toStr(col(r,'Date','date','Txn Date')),
-            invoice:      toStr(col(r,'Invoice No.','Invoice','invoice')),
-            patient_name: toStr(col(r,'Patient Name','Patient','patient_name')),
-            phone:        toStr(col(r,'Phone Number','Phone','phone')),
-            amount:       toNum(col(r,'Amount','Amount (₹)','amount')),
-            mode:         toStr(col(r,'Payment Mode','Mode','mode')) || 'Cash',
-            status:       toStr(col(r,'Status','status')) || 'Paid',
+            txn_date:     toStr(col(r,'Date','date','DATE','Txn Date','Transaction Date','Dt')),
+            invoice:      toStr(col(r,'Invoice No.','Invoice No','Invoice','invoice','Bill No','Bill No.','DC No','DC No.','DC.','Inv No','Voucher No','Vch No')),
+            patient_name: toStr(col(r,'Patient Name','Patient','patient_name','Name','Party Name','Party','Customer')),
+            phone:        toStr(col(r,'Phone Number','Phone No.','Phone No','Phone','phone','Phn Num','Phn No','Phn No.','Mobile','Mobile No','Mobile No.','Contact','Contact No')),
+            amount:       toNum(col(r,'Amount','Amount (₹)','amount','Amt','Total','Total Amount','Total Amt')),
+            mode:         toStr(col(r,'Payment Mode','Pay Mode','Mode','mode','Payment','Payment Type')) || 'Cash',
+            status:       toStr(col(r,'Status','status','Payment Status','Pay Status')) || 'Paid',
           }));
 
           const BATCH = 50; let inserted = 0; const total = mapped.length;
