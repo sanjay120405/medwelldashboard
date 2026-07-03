@@ -306,17 +306,25 @@
     async function loadData() {
       document.getElementById('colBody').innerHTML =
         '<tr class="empty-row"><td colspan="10" style="color:#9CA3AF">Loading…</td></tr>';
-      const { data: rows, error } = await db
-        .from('lab_collection')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .range(0, 99999);
-      if (error) {
-        document.getElementById('colBody').innerHTML =
-          `<tr class="empty-row"><td colspan="10" style="color:#EF4444">Error: ${error.message}</td></tr>`;
-        return;
+      const FETCH_SIZE = 1000;
+      let allRows = [], from = 0;
+      while (true) {
+        const { data: rows, error } = await db
+          .from('lab_collection')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + FETCH_SIZE - 1);
+        if (error) {
+          document.getElementById('colBody').innerHTML =
+            `<tr class="empty-row"><td colspan="10" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+          return;
+        }
+        if (!rows || rows.length === 0) break;
+        allRows = allRows.concat(rows);
+        if (rows.length < FETCH_SIZE) break;
+        from += FETCH_SIZE;
       }
-      data = rows || [];
+      data = allRows;
       filtered = [...data];
       currentPage = 1;
       renderTable();
