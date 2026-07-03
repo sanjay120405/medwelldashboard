@@ -726,13 +726,13 @@
 
           const mapped = rows.map(r => ({
             txn_date:  toStr(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
-            party:     toStr(col(r, 'Party', 'Party Name', 'Supplier', 'Party/Supplier', 'Vendor')),
+            party:     toStr(col(r, 'Party', 'Party Name', 'Party / Supplier', 'Party/Supplier', 'Supplier', 'Vendor')),
             vch:       toStr(col(r, 'Bill No./Invoice No.', 'Bill No', 'Bill No.', 'Invoice No', 'Invoice No.', 'Vch No', 'Voucher No')),
-            taxable:   toNum(col(r, 'Taxable Amount', 'Taxable', 'Taxable Amt')),
+            taxable:   toNum(col(r, 'Taxable Amount', 'Taxable Amount (₹)', 'Taxable', 'Taxable Amt')),
             cgst:      toNum(col(r, 'CGST', 'CGST (₹)')),
             sgst:      toNum(col(r, 'SGST', 'SGST (₹)')),
             igst:      toNum(col(r, 'IGST', 'IGST (₹)')),
-            invoice:   toNum(col(r, 'Invoice Value', 'Invoice Amount', 'Invoice', 'Inv Value')),
+            invoice:   toNum(col(r, 'Invoice Value', 'Invoice Value (₹)', 'Invoice Amount', 'Invoice', 'Inv Value')),
             transport: toNum(col(r, 'Transport', 'Freight', 'Transport (₹)')),
             status:    toStr(col(r, 'Payment Status', 'Status', 'Payment')) || 'Pending',
           }));
