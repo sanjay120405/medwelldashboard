@@ -345,9 +345,9 @@
       <div class="line-card">
         <div class="line-hdr">
           <span class="panel-title">Sales Overview</span>
-          <select class="line-select">
-            <option>Weekly Sales</option>
-            <option>Monthly Sales</option>
+          <select class="line-select" id="chartMode" onchange="switchChart(this.value)">
+            <option value="weekly">Weekly Sales</option>
+            <option value="monthly">Monthly Sales</option>
           </select>
         </div>
         <canvas id="lineChart" height="110"></canvas>
@@ -386,6 +386,31 @@
       from += SIZE;
     }
     return all;
+  }
+
+  let allSalesGlobal = [];
+
+  function switchChart(mode) {
+    const now = new Date();
+    if (mode === 'monthly') {
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const values = months.map((_, i) =>
+        allSalesGlobal.filter(r => r.dt.getFullYear() === now.getFullYear() && r.dt.getMonth() === i)
+          .reduce((s,r) => s + r.amt, 0)
+      );
+      barChart.data.labels = months;
+      barChart.data.datasets[0].data = values;
+    } else {
+      const labels = [], values = [];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(now); d.setDate(d.getDate() - i);
+        labels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
+        values.push(allSalesGlobal.filter(r => r.dt.toDateString() === d.toDateString()).reduce((s,r) => s + r.amt, 0));
+      }
+      barChart.data.labels = labels;
+      barChart.data.datasets[0].data = values;
+    }
+    barChart.update();
   }
 
   // Init charts with placeholder data
@@ -427,11 +452,12 @@
     ]);
 
     // Combine all sales with parsed dates
-    const allSales = [
+    allSalesGlobal = [
       ...retail.map(r   => ({ dt: parseDt(r.txn_date), amt: +r.amount      || 0, mode: (r.mode||'').toLowerCase() })),
       ...makkal.map(r   => ({ dt: parseDt(r.txn_date), amt: +r.amount      || 0, mode: (r.mode||'').toLowerCase() })),
       ...wholesale.map(r=> ({ dt: parseDt(r.txn_date), amt: +r.invoice_amt || 0, mode: '' })),
     ].filter(r => r.dt);
+    const allSales = allSalesGlobal;
 
     const now = new Date();
 
