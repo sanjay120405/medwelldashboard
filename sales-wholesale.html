@@ -598,27 +598,36 @@
       document.getElementById('totalEntries').textContent  = filtered.length;
     }
 
-    function matchDate(dateStr, month, year) {
-      if (!dateStr) return false;
+    function parseDate(d) {
+      if (!d) return null;
       let m;
-      m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (m) return (!year || m[1]===year) && (!month || m[2]===month);
-      m = dateStr.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
-      if (m) return (!year || m[3]===year) && (!month || m[2].padStart(2,'0')===month);
-      m = dateStr.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2})$/);
-      if (m) return (!year || ('20'+m[3])===year) && (!month || m[2].padStart(2,'0')===month);
-      return true;
+      m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return { year: m[1], month: m[2] };
+      m = d.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
+      if (m) return { year: m[3], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2})$/);
+      if (m) return { year: '20'+m[3], month: m[2].padStart(2,'0') };
+      return null;
     }
     function filterTable() {
-      const q     = document.getElementById('searchInput').value.toLowerCase();
+      const q     = document.getElementById('searchInput').value.toLowerCase().trim();
       const month = document.getElementById('filterMonth').value;
       const year  = document.getElementById('filterYear').value;
-      filtered = data.filter(r =>
-        ((r.party || '').toLowerCase().includes(q) ||
-        (r.vch || '').toLowerCase().includes(q) ||
-        (r.txn_date || '').toLowerCase().includes(q)) &&
-        (!month && !year ? true : matchDate(r.txn_date, month, year))
-      );
+      filtered = data.filter(r => {
+        if (q) {
+          const hit = (r.party||'').toLowerCase().includes(q) ||
+                      (r.vch||'').toLowerCase().includes(q) ||
+                      (r.txn_date||'').toLowerCase().includes(q);
+          if (!hit) return false;
+        }
+        if (month || year) {
+          const p = parseDate(r.txn_date);
+          if (!p) return false;
+          if (month && p.month !== month) return false;
+          if (year  && p.year  !== year)  return false;
+        }
+        return true;
+      });
       currentPage = 1;
       renderTable();
     }
