@@ -631,7 +631,7 @@
       filtered = data.filter(r => {
         if (q) {
           const hit = (r.party||'').toLowerCase().includes(q) ||
-                      (r.vch||'').toLowerCase().includes(q) ||
+                      (r.bill_no||'').toLowerCase().includes(q) ||
                       (r.txn_date||'').toLowerCase().includes(q);
           if (!hit) return false;
         }

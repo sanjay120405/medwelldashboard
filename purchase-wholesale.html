@@ -451,7 +451,7 @@
 
     async function loadData() {
       document.getElementById('purchaseBody').innerHTML =
-        '<tr class="empty-row"><td colspan="11" style="color:#9CA3AF">Loading…</td></tr>';
+        '<tr class="empty-row"><td colspan="12" style="color:#9CA3AF">Loading…</td></tr>';
       const { data: rows, error } = await db
         .from('wholesale_purchases')
         .select('*')
@@ -459,7 +459,7 @@
         .range(0, 99999);
       if (error) {
         document.getElementById('purchaseBody').innerHTML =
-          `<tr class="empty-row"><td colspan="11" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+          `<tr class="empty-row"><td colspan="12" style="color:#EF4444">Error: ${error.message}</td></tr>`;
         return;
       }
       data = rows || [];
@@ -486,7 +486,7 @@
       const tbody = document.getElementById('purchaseBody');
 
       if (slice.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="11">No records found</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No records found</td></tr>';
       } else {
         tbody.innerHTML = slice.map((r, i) => `
           <tr>
