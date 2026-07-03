@@ -461,13 +461,13 @@
 
     const now = new Date();
 
-    // ── Last Day Sales ──
-    const sortedDts = allSales.map(r => r.dt).sort((a,b) => b-a);
-    let lastDaySales = 0;
-    if (sortedDts.length) {
-      const last = sortedDts[0].toDateString();
-      lastDaySales = allSales.filter(r => r.dt.toDateString() === last).reduce((s,r) => s + r.amt, 0);
-    }
+    // ── Last Day Sales (yesterday) ──
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+    const lastDaySales = allSales
+      .filter(r => r.dt.toDateString() === yesterdayStr)
+      .reduce((s, r) => s + r.amt, 0);
 
     // ── Monthly Revenue (current month) ──
     const monthlyRev = allSales
