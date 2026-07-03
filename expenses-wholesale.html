@@ -337,7 +337,7 @@
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     let data = [], filtered = [], currentPage = 1, editingId = null;
-    const PAGE_SIZE = 50000;
+    const PAGE_SIZE = 100000;
 
     async function loadData() {
       document.getElementById('expBody').innerHTML =
@@ -346,7 +346,7 @@
         .from('wholesale_expenses')
         .select('*')
         .order('created_at', { ascending: false })
-        .range(0, 49999);
+        .range(0, 99999);
       if (error) {
         document.getElementById('expBody').innerHTML =
           `<tr class="empty-row"><td colspan="8" style="color:#EF4444">Error: ${error.message}</td></tr>`;
