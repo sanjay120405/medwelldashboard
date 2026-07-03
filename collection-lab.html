@@ -301,7 +301,7 @@
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     let data = [], filtered = [], currentPage = 1, editingId = null;
-    const PAGE_SIZE = 100000;
+    const PAGE_SIZE = 50000;
 
     async function loadData() {
       document.getElementById('colBody').innerHTML =
@@ -310,7 +310,7 @@
         .from('lab_collection')
         .select('*')
         .order('created_at', { ascending: false })
-        .range(0, 9999);
+        .range(0, 49999);
       if (error) {
         document.getElementById('colBody').innerHTML =
           `<tr class="empty-row"><td colspan="10" style="color:#EF4444">Error: ${error.message}</td></tr>`;
