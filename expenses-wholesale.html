@@ -467,13 +467,15 @@
 
     function parseDate(d) {
       if (!d) return null;
+      d = String(d).trim();
       let m;
-      m = d.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-      if (m) return { year: m[1], month: m[2] };
-      m = d.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
+      m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return { year: m[1], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
       if (m) return { year: m[3], month: m[2].padStart(2,'0') };
-      m = d.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2})$/);
+      m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2})$/);
       if (m) return { year: '20'+m[3], month: m[2].padStart(2,'0') };
+      try { const dt = new Date(d); if (!isNaN(dt)) return { year: String(dt.getFullYear()), month: String(dt.getMonth()+1).padStart(2,'0') }; } catch(e) {}
       return null;
     }
     function filterTable() {
