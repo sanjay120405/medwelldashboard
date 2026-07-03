@@ -302,7 +302,7 @@
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     let data = [], filtered = [], currentPage = 1, editingId = null;
-    const PAGE_SIZE = 30;
+    const PAGE_SIZE = 100000;
 
     async function loadData() {
       document.getElementById('salesBody').innerHTML =
@@ -310,7 +310,8 @@
       const { data: rows, error } = await db
         .from('retail_sales')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, 9999);
       if (error) {
         document.getElementById('salesBody').innerHTML =
           `<tr class="empty-row"><td colspan="9" style="color:#EF4444">Error: ${error.message}</td></tr>`;

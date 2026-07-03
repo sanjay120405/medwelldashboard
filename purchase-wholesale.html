@@ -447,7 +447,7 @@
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     let data = [], filtered = [], currentPage = 1, editingId = null;
-    const PAGE_SIZE = 30;
+    const PAGE_SIZE = 100000;
 
     async function loadData() {
       document.getElementById('purchaseBody').innerHTML =
@@ -455,7 +455,8 @@
       const { data: rows, error } = await db
         .from('wholesale_purchases')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .range(0, 9999);
       if (error) {
         document.getElementById('purchaseBody').innerHTML =
           `<tr class="empty-row"><td colspan="11" style="color:#EF4444">Error: ${error.message}</td></tr>`;
