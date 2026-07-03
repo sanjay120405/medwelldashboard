@@ -391,16 +391,18 @@
               <th>#</th>
               <th>Date</th>
               <th>Party</th>
-              <th>Vch / Bill No.</th>
-              <th class="right">Taxable Amount (₹)</th>
+              <th>Bill No</th>
+              <th class="right">Tax Amt (₹)</th>
               <th class="right">CGST (₹)</th>
               <th class="right">SGST (₹)</th>
               <th class="right">IGST (₹)</th>
-              <th class="right">Invoice Value (₹)</th>
+              <th class="right">Invoice Amt (₹)</th>
               <th class="right">Transport (₹)</th>
               <th class="right">Margin (₹)</th>
               <th class="right">Commission (₹)</th>
               <th class="right">Net Profit (₹)</th>
+              <th class="right">Paid Amt (₹)</th>
+              <th class="right">Balance (₹)</th>
               <th>Payment</th>
               <th>Actions</th>
             </tr>
@@ -446,12 +448,12 @@
           <input id="f_party" type="text" placeholder="Customer / Party" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
-          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Vch / Bill No.</label>
-          <input id="f_vch" type="text" placeholder="e.g. MTS05153" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Bill No</label>
+          <input id="f_bill_no" type="text" placeholder="e.g. MTS05153" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
-          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Taxable Amount (₹)</label>
-          <input id="f_taxable" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Tax Amount (₹)</label>
+          <input id="f_tax_amt" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">CGST (₹)</label>
@@ -466,8 +468,8 @@
           <input id="f_igst" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
-          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Invoice Value (₹)</label>
-          <input id="f_invoice" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Invoice Amt (₹)</label>
+          <input id="f_invoice_amt" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Transport (₹)</label>
@@ -483,7 +485,15 @@
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Net Profit (₹)</label>
-          <input id="f_netprofit" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <input id="f_net_profit" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Paid Amt (₹)</label>
+          <input id="f_paid_amt" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Balance (₹)</label>
+          <input id="f_balance" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div style="grid-column:1/-1;">
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Payment</label>
@@ -512,7 +522,7 @@
 
     async function loadData() {
       document.getElementById('salesBody').innerHTML =
-        '<tr class="empty-row"><td colspan="14" style="color:#9CA3AF">Loading…</td></tr>';
+        '<tr class="empty-row"><td colspan="17" style="color:#9CA3AF">Loading…</td></tr>';
       const { data: rows, error } = await db
         .from('wholesale_sales')
         .select('*')
@@ -520,7 +530,7 @@
         .range(0, 49999);
       if (error) {
         document.getElementById('salesBody').innerHTML =
-          `<tr class="empty-row"><td colspan="14" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+          `<tr class="empty-row"><td colspan="17" style="color:#EF4444">Error: ${error.message}</td></tr>`;
         return;
       }
       data = rows || [];
@@ -540,23 +550,25 @@
       const tbody = document.getElementById('salesBody');
 
       if (slice.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="14">No records found</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="17">No records found</td></tr>';
       } else {
         tbody.innerHTML = slice.map((r, i) => `
           <tr>
             <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
             <td class="td-date">${r.txn_date || '—'}</td>
             <td class="td-party">${r.party || '—'}</td>
-            <td class="td-vch">${r.vch || '—'}</td>
-            <td class="td-amt right">${fmt(r.taxable)}</td>
+            <td class="td-vch">${r.bill_no || '—'}</td>
+            <td class="td-amt right">${fmt(r.tax_amt)}</td>
             <td class="td-tax right">${fmt(r.cgst)}</td>
             <td class="td-tax right">${fmt(r.sgst)}</td>
             <td class="td-tax right">${fmt(r.igst)}</td>
-            <td class="td-invoice right">${fmt(r.invoice)}</td>
+            <td class="td-invoice right">${fmt(r.invoice_amt)}</td>
             <td class="td-tax right">${fmt(r.transport)}</td>
             <td class="td-tax right">${fmt(r.margin)}</td>
             <td class="td-tax right">${fmt(r.commission)}</td>
-            <td class="td-amt right">${fmt(r.netprofit)}</td>
+            <td class="td-amt right">${fmt(r.net_profit)}</td>
+            <td class="td-amt right">${fmt(r.paid_amt)}</td>
+            <td class="td-amt right">${fmt(r.balance)}</td>
             <td>${r.payment ? `<span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:${r.payment==='Paid'?'#D1FAE5':r.payment==='Partial'?'#DBEAFE':'#FEF3C7'};color:${r.payment==='Paid'?'#059669':r.payment==='Partial'?'#2563EB':'#D97706'}">${r.payment}</span>` : '—'}</td>
             <td><div class="action-cell">
               <button class="btn-edit" onclick="editRow('${r.id}')">✏ Edit</button>
@@ -589,8 +601,8 @@
     function updateSummary() {
       let invoice=0, taxable=0, gst=0;
       filtered.forEach(r => {
-        invoice += Number(r.invoice) || 0;
-        taxable += Number(r.taxable) || 0;
+        invoice += Number(r.invoice_amt) || 0;
+        taxable += Number(r.tax_amt) || 0;
         gst     += (Number(r.cgst) || 0) + (Number(r.sgst) || 0) + (Number(r.igst) || 0);
       });
       document.getElementById('totalInvoice').textContent  = '₹' + invoice.toLocaleString('en-IN',{minimumFractionDigits:2});
@@ -645,7 +657,7 @@
       document.getElementById('modal').style.display = 'none';
       editingId = null;
       document.getElementById('modalTitle').textContent = 'Add Sales Entry';
-      ['f_date','f_party','f_vch','f_taxable','f_cgst','f_sgst','f_igst','f_invoice','f_transport','f_margin','f_commission','f_netprofit']
+      ['f_date','f_party','f_bill_no','f_tax_amt','f_cgst','f_sgst','f_igst','f_invoice_amt','f_transport','f_margin','f_commission','f_net_profit','f_paid_amt','f_balance']
         .forEach(id => document.getElementById(id).value = '');
       document.getElementById('f_payment').value = '';
     }
@@ -655,19 +667,21 @@
       if (!r) return;
       editingId = id;
       document.getElementById('modalTitle').textContent = 'Edit Sales Entry';
-      document.getElementById('f_date').value       = r.txn_date || '';
-      document.getElementById('f_party').value      = r.party || '';
-      document.getElementById('f_vch').value        = r.vch || '';
-      document.getElementById('f_taxable').value    = r.taxable || '';
-      document.getElementById('f_cgst').value       = r.cgst || '';
-      document.getElementById('f_sgst').value       = r.sgst || '';
-      document.getElementById('f_igst').value       = r.igst || '';
-      document.getElementById('f_invoice').value    = r.invoice || '';
-      document.getElementById('f_transport').value  = r.transport || '';
-      document.getElementById('f_margin').value     = r.margin || '';
-      document.getElementById('f_commission').value = r.commission || '';
-      document.getElementById('f_netprofit').value  = r.netprofit || '';
-      document.getElementById('f_payment').value    = r.payment || '';
+      document.getElementById('f_date').value         = r.txn_date || '';
+      document.getElementById('f_party').value        = r.party || '';
+      document.getElementById('f_bill_no').value      = r.bill_no || '';
+      document.getElementById('f_tax_amt').value      = r.tax_amt || '';
+      document.getElementById('f_cgst').value         = r.cgst || '';
+      document.getElementById('f_sgst').value         = r.sgst || '';
+      document.getElementById('f_igst').value         = r.igst || '';
+      document.getElementById('f_invoice_amt').value  = r.invoice_amt || '';
+      document.getElementById('f_transport').value    = r.transport || '';
+      document.getElementById('f_margin').value       = r.margin || '';
+      document.getElementById('f_commission').value   = r.commission || '';
+      document.getElementById('f_net_profit').value   = r.net_profit || '';
+      document.getElementById('f_paid_amt').value     = r.paid_amt || '';
+      document.getElementById('f_balance').value      = r.balance || '';
+      document.getElementById('f_payment').value      = r.payment || '';
       document.getElementById('modal').style.display = 'flex';
     }
 
@@ -685,19 +699,21 @@
       const btn = document.querySelector('[onclick="saveRow()"]');
       btn.textContent = 'Saving…'; btn.disabled = true;
       const row = {
-        txn_date:   document.getElementById('f_date').value || null,
-        party:      document.getElementById('f_party').value || null,
-        vch:        document.getElementById('f_vch').value || null,
-        taxable:    parseFloat(document.getElementById('f_taxable').value) || 0,
-        cgst:       parseFloat(document.getElementById('f_cgst').value) || 0,
-        sgst:       parseFloat(document.getElementById('f_sgst').value) || 0,
-        igst:       parseFloat(document.getElementById('f_igst').value) || 0,
-        invoice:    parseFloat(document.getElementById('f_invoice').value) || 0,
-        transport:  parseFloat(document.getElementById('f_transport').value) || 0,
-        margin:     parseFloat(document.getElementById('f_margin').value) || 0,
-        commission: parseFloat(document.getElementById('f_commission').value) || 0,
-        netprofit:  parseFloat(document.getElementById('f_netprofit').value) || 0,
-        payment:    document.getElementById('f_payment').value || null,
+        txn_date:    document.getElementById('f_date').value || null,
+        party:       document.getElementById('f_party').value || null,
+        bill_no:     document.getElementById('f_bill_no').value || null,
+        tax_amt:     parseFloat(document.getElementById('f_tax_amt').value) || 0,
+        cgst:        parseFloat(document.getElementById('f_cgst').value) || 0,
+        sgst:        parseFloat(document.getElementById('f_sgst').value) || 0,
+        igst:        parseFloat(document.getElementById('f_igst').value) || 0,
+        invoice_amt: parseFloat(document.getElementById('f_invoice_amt').value) || 0,
+        transport:   parseFloat(document.getElementById('f_transport').value) || 0,
+        margin:      parseFloat(document.getElementById('f_margin').value) || 0,
+        commission:  parseFloat(document.getElementById('f_commission').value) || 0,
+        net_profit:  parseFloat(document.getElementById('f_net_profit').value) || 0,
+        paid_amt:    parseFloat(document.getElementById('f_paid_amt').value) || 0,
+        balance:     parseFloat(document.getElementById('f_balance').value) || 0,
+        payment:     document.getElementById('f_payment').value || null,
       };
 
       if (editingId) {
@@ -722,20 +738,22 @@
     function exportData() {
       if (!filtered.length) { alert('No records to export.'); return; }
       const rows = filtered.map((r, i) => ({
-        '#':                   i + 1,
-        'Date':                r.txn_date || '',
-        'Party':               r.party || '',
-        'Vch/Bill No.':        r.vch || '',
-        'Taxable Amount (₹)':  Number(r.taxable) || 0,
-        'CGST (₹)':            Number(r.cgst) || 0,
-        'SGST (₹)':            Number(r.sgst) || 0,
-        'IGST (₹)':            Number(r.igst) || 0,
-        'Invoice Value (₹)':   Number(r.invoice) || 0,
-        'Transport (₹)':       Number(r.transport) || 0,
-        'Margin (₹)':          Number(r.margin) || 0,
-        'Commission (₹)':      Number(r.commission) || 0,
-        'Net Profit (₹)':      Number(r.netprofit) || 0,
-        'Payment':             r.payment || '',
+        '#':               i + 1,
+        'Date':            r.txn_date || '',
+        'Party':           r.party || '',
+        'Bill No':         r.bill_no || '',
+        'Tax Amt (₹)':     Number(r.tax_amt) || 0,
+        'CGST (₹)':        Number(r.cgst) || 0,
+        'SGST (₹)':        Number(r.sgst) || 0,
+        'IGST (₹)':        Number(r.igst) || 0,
+        'Invoice Amt (₹)': Number(r.invoice_amt) || 0,
+        'Transport (₹)':   Number(r.transport) || 0,
+        'Margin (₹)':      Number(r.margin) || 0,
+        'Commission (₹)':  Number(r.commission) || 0,
+        'Net Profit (₹)':  Number(r.net_profit) || 0,
+        'Paid Amt (₹)':    Number(r.paid_amt) || 0,
+        'Balance (₹)':     Number(r.balance) || 0,
+        'Payment':         r.payment || '',
       }));
       const ws = XLSX.utils.json_to_sheet(rows);
       const wb = XLSX.utils.book_new();
@@ -788,19 +806,21 @@
           }
 
           const mapped = rows.map(r => ({
-            txn_date:   toStr(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
-            party:      toStr(col(r, 'Party', 'Party Name', 'Customer', 'Client')),
-            vch:        toStr(col(r, 'Vch/Bill No.', 'Bill No', 'Bill No.', 'Vch No', 'Invoice No', 'Voucher No')),
-            taxable:    toNum(col(r, 'Taxable Amount', 'Taxable', 'Taxable Amt')),
-            cgst:       toNum(col(r, 'CGST', 'CGST (₹)')),
-            sgst:       toNum(col(r, 'SGST', 'SGST (₹)')),
-            igst:       toNum(col(r, 'IGST', 'IGST (₹)')),
-            invoice:    toNum(col(r, 'Invoice Value', 'Invoice Amount', 'Invoice', 'Inv Value')),
-            transport:  toNum(col(r, 'Transport', 'Freight', 'Transport (₹)')),
-            margin:     toNum(col(r, 'Margin', 'Margin (₹)')),
-            commission: toNum(col(r, 'Commission', 'Commission (₹)')),
-            netprofit:  toNum(col(r, 'Net Profit', 'Net Profit (₹)', 'NetProfit', 'Profit')),
-            payment:    toStr(col(r, 'Payment', 'Payment Status', 'Status')),
+            txn_date:    toStr(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
+            party:       toStr(col(r, 'Party', 'Party Name', 'Customer', 'Client')),
+            bill_no:     toStr(col(r, 'Bill No', 'Bill No.', 'Vch/Bill No.', 'Vch No', 'Invoice No', 'Voucher No')),
+            tax_amt:     toNum(col(r, 'Tax Amt', 'Tax Amount', 'Taxable Amount', 'Taxable', 'TAX AMT')),
+            cgst:        toNum(col(r, 'CGST', 'CGST (₹)')),
+            sgst:        toNum(col(r, 'SGST', 'SGST (₹)')),
+            igst:        toNum(col(r, 'IGST', 'IGST (₹)')),
+            invoice_amt: toNum(col(r, 'Invoice Amt', 'Invoice Amount', 'Invoice Value', 'Invoice', 'INVOICE AMT')),
+            transport:   toNum(col(r, 'Transport', 'Freight', 'Transport (₹)')),
+            margin:      toNum(col(r, 'Margin', 'Margin (₹)')),
+            commission:  toNum(col(r, 'Commission', 'Commission (₹)')),
+            net_profit:  toNum(col(r, 'Net Profit', 'Net Profit (₹)', 'NetProfit', 'Profit')),
+            paid_amt:    toNum(col(r, 'Paid Amt', 'Paid Amount', 'PAID AMT')),
+            balance:     toNum(col(r, 'Balance', 'BALANCE')),
+            payment:     toStr(col(r, 'Payment', 'Payment Status', 'Status')),
           }));
 
           const BATCH = 50;
