@@ -153,6 +153,18 @@
           </svg>
           <input type="text" id="searchInput" placeholder="Search patient, invoice…" oninput="filterTable()"/>
         </div>
+        <select id="filterMonth" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Months</option>
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="filterYear" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Years</option>
+          <option value="2024">2024</option><option value="2025">2025</option>
+          <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+        </select>
         <button class="btn btn-outline" onclick="window.print()">🖨 Print</button>
         <button class="btn btn-export" onclick="exportData()">⬇ Export</button>
         <label class="btn btn-import" title="Import CSV/Excel">
@@ -384,15 +396,29 @@
       document.getElementById('totalEntries').textContent = filtered.length;
     }
 
+    function matchDate(dateStr, month, year) {
+      if (!dateStr) return false;
+      let m;
+      m = dateStr.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      if (m) return (!year || m[1]===year) && (!month || m[2]===month);
+      m = dateStr.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/);
+      if (m) return (!year || m[3]===year) && (!month || m[2].padStart(2,'0')===month);
+      m = dateStr.match(/^(\d{1,2})[\/.](\d{1,2})[\/.](\d{2})$/);
+      if (m) return (!year || ('20'+m[3])===year) && (!month || m[2].padStart(2,'0')===month);
+      return true;
+    }
     function filterTable() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
+      const q     = document.getElementById('searchInput').value.toLowerCase();
+      const month = document.getElementById('filterMonth').value;
+      const year  = document.getElementById('filterYear').value;
       filtered = data.filter(r =>
-        (r.patient_name || '').toLowerCase().includes(q) ||
+        ((r.patient_name || '').toLowerCase().includes(q) ||
         (r.invoice      || '').toLowerCase().includes(q) ||
         (r.phone        || '').toLowerCase().includes(q) ||
         (r.txn_date     || '').toLowerCase().includes(q) ||
         (r.mode         || '').toLowerCase().includes(q) ||
-        (r.status       || '').toLowerCase().includes(q)
+        (r.status       || '').toLowerCase().includes(q)) &&
+        (!month && !year ? true : matchDate(r.txn_date, month, year))
       );
       currentPage = 1;
       renderTable();
