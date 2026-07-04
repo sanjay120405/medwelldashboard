@@ -368,9 +368,9 @@
         <div class="sum-sub">Tax collected</div>
       </div>
       <div class="sum-card purple">
-        <div class="sum-label">Total Entries</div>
-        <div class="sum-value" id="totalEntries">0</div>
-        <div class="sum-sub">Transactions</div>
+        <div class="sum-label">Total Pending Amount</div>
+        <div class="sum-value" id="totalPending">₹0.00</div>
+        <div class="sum-sub">Awaiting payment</div>
       </div>
     </div>
 
@@ -607,16 +607,17 @@
     }
 
     function updateSummary() {
-      let invoice=0, taxable=0, gst=0;
+      let invoice=0, taxable=0, gst=0, pending=0;
       filtered.forEach(r => {
         invoice += Number(r.invoice_amt) || 0;
         taxable += Number(r.tax_amt) || 0;
         gst     += (Number(r.cgst) || 0) + (Number(r.sgst) || 0) + (Number(r.igst) || 0);
+        if (!r.payment || r.payment === 'Pending') pending += Number(r.invoice_amt) || 0;
       });
       document.getElementById('totalInvoice').textContent  = '₹' + invoice.toLocaleString('en-IN',{minimumFractionDigits:2});
       document.getElementById('totalTaxable').textContent  = '₹' + taxable.toLocaleString('en-IN',{minimumFractionDigits:2});
       document.getElementById('totalGst').textContent      = '₹' + gst.toLocaleString('en-IN',{minimumFractionDigits:2});
-      document.getElementById('totalEntries').textContent  = filtered.length;
+      document.getElementById('totalPending').textContent  = '₹' + pending.toLocaleString('en-IN',{minimumFractionDigits:2});
     }
 
     function parseDate(d) {
