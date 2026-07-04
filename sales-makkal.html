@@ -444,6 +444,28 @@
       renderTable();
     }
 
+    function fmtDate(v) {
+      if (!v) return null;
+      const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + '-' + m[2] + '-' + m[1] : (v || null);
+    }
+    function toInputDate(v) {
+      if (!v) return '';
+      const m = String(v).match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      return m ? m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0') : v;
+    }
+    function importDate(v) {
+      if (!v) return null;
+      v = String(v).trim();
+      let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-20' + m[3];
+      return v || null;
+    }
+
     function addRow() {
       editingId = null;
       document.getElementById('modalTitle').textContent = 'Add Sales Entry';
@@ -466,7 +488,7 @@
       if (!r) return;
       editingId = id;
       document.getElementById('modalTitle').textContent  = 'Edit Sales Entry';
-      document.getElementById('f_date').value    = r.txn_date     || '';
+      document.getElementById('f_date').value    = toInputDate(r.txn_date);
       document.getElementById('f_invoice').value = r.invoice      || '';
       document.getElementById('f_patient').value = r.patient_name || '';
       document.getElementById('f_phone').value   = r.phone        || '';
@@ -490,7 +512,7 @@
       const btn = document.querySelector('[onclick="saveRow()"]');
       btn.textContent = 'Saving…'; btn.disabled = true;
       const row = {
-        txn_date:     document.getElementById('f_date').value    || null,
+        txn_date:     fmtDate(document.getElementById('f_date').value),
         invoice:      document.getElementById('f_invoice').value || null,
         patient_name: document.getElementById('f_patient').value || null,
         phone:        document.getElementById('f_phone').value   || null,
@@ -576,7 +598,7 @@
           if (!rows.length) { overlay.classList.remove('show'); alert('No data rows found.'); return; }
 
           const mapped = rows.map(r => ({
-            txn_date:     toStr(col(r,'Date','date','DATE','Txn Date','Transaction Date','Dt')),
+            txn_date:     importDate(col(r,'Date','date','DATE','Txn Date','Transaction Date','Dt')),
             invoice:      toStr(col(r,'Invoice No.','Invoice No','Invoice','invoice','Bill No','Bill No.','DC No','DC No.','DC.','Inv No','Voucher No','Vch No')),
             patient_name: toStr(col(r,'Patient Name','Patient','patient_name','Name','Party Name','Party','Customer')),
             phone:        toStr(col(r,'Phone Number','Phone No.','Phone No','Phone','phone','Phn Num','Phn No','Phn No.','Mobile','Mobile No','Mobile No.','Contact','Contact No')),

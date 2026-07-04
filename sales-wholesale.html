@@ -656,6 +656,28 @@
       renderTable();
     }
 
+    function fmtDate(v) {
+      if (!v) return null;
+      const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + '-' + m[2] + '-' + m[1] : (v || null);
+    }
+    function toInputDate(v) {
+      if (!v) return '';
+      const m = String(v).match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      return m ? m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0') : v;
+    }
+    function importDate(v) {
+      if (!v) return null;
+      v = String(v).trim();
+      let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-20' + m[3];
+      return v || null;
+    }
+
     function calcBalance() {
       const invoice = parseFloat(document.getElementById('f_invoice_amt').value) || 0;
       const paid    = parseFloat(document.getElementById('f_paid_amt').value) || 0;
@@ -689,7 +711,7 @@
       if (!r) return;
       editingId = id;
       document.getElementById('modalTitle').textContent = 'Edit Sales Entry';
-      document.getElementById('f_date').value         = r.txn_date || '';
+      document.getElementById('f_date').value         = toInputDate(r.txn_date);
       document.getElementById('f_party').value        = r.party || '';
       document.getElementById('f_bill_no').value      = r.bill_no || '';
       document.getElementById('f_tax_amt').value      = r.tax_amt || '';
@@ -721,7 +743,7 @@
       const btn = document.querySelector('[onclick="saveRow()"]');
       btn.textContent = 'Saving…'; btn.disabled = true;
       const row = {
-        txn_date:    document.getElementById('f_date').value || null,
+        txn_date:    fmtDate(document.getElementById('f_date').value),
         party:       document.getElementById('f_party').value || null,
         bill_no:     document.getElementById('f_bill_no').value || null,
         tax_amt:     parseFloat(document.getElementById('f_tax_amt').value) || 0,
@@ -828,7 +850,7 @@
           }
 
           const mapped = rows.map(r => ({
-            txn_date:    toStr(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
+            txn_date:    importDate(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
             party:       toStr(col(r, 'Party', 'Party Name', 'Customer', 'Client')),
             bill_no:     toStr(col(r, 'Bill No', 'Bill No.', 'Vch/Bill No.', 'Vch No', 'Invoice No', 'Voucher No')),
             tax_amt:     toNum(col(r, 'Tax Amt', 'Tax Amt (₹)', 'Tax Amount', 'Taxable Amount', 'Taxable', 'TAX AMT')),

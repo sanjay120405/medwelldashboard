@@ -513,6 +513,28 @@
       renderTable();
     }
 
+    function fmtDate(v) {
+      if (!v) return null;
+      const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + '-' + m[2] + '-' + m[1] : (v || null);
+    }
+    function toInputDate(v) {
+      if (!v) return '';
+      const m = String(v).match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      return m ? m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0') : v;
+    }
+    function importDate(v) {
+      if (!v) return null;
+      v = String(v).trim();
+      let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-20' + m[3];
+      return v || null;
+    }
+
     function addRow() {
       editingId = null;
       document.getElementById('modalTitle').textContent = 'Add Expense Entry';
@@ -543,7 +565,7 @@
       document.getElementById('f_for').value     = r.exp_for     || '';
       document.getElementById('f_from').value    = r.amount_from || '';
       document.getElementById('f_to').value      = r.amount_to   || '';
-      document.getElementById('f_date').value    = r.txn_date    || '';
+      document.getElementById('f_date').value    = toInputDate(r.txn_date);
       document.getElementById('f_remarks').value = r.remarks     || '';
       // trigger sub-dropdown then set value
       handleForChange();
@@ -570,7 +592,7 @@
         sub_for:     document.getElementById('f_sub_for').value || null,
         amount_from: document.getElementById('f_from').value    || null,
         amount_to:   document.getElementById('f_to').value      || null,
-        txn_date:    document.getElementById('f_date').value    || null,
+        txn_date:    fmtDate(document.getElementById('f_date').value),
         remarks:     document.getElementById('f_remarks').value || null,
       };
 
@@ -645,9 +667,9 @@
       const reader = new FileReader();
       reader.onload = async function(evt) {
         try {
-          const wb   = XLSX.read(evt.target.result, { type:'array', cellDates:true });
+          const wb   = XLSX.read(evt.target.result, { type:'array', cellDates:false });
           const ws   = wb.Sheets[wb.SheetNames[0]];
-          const rows = XLSX.utils.sheet_to_json(ws, { defval:'' });
+          const rows = XLSX.utils.sheet_to_json(ws, { defval:'', raw:false });
           if (!rows.length) { overlay.classList.remove('show'); alert('No data rows found.'); return; }
 
           const mapped = rows.map(r => ({
@@ -656,7 +678,7 @@
             sub_for:     toStr(col(r,'Sub For','sub_for','Employee','sub for')),
             amount_from: toStr(col(r,'Amount From','amount_from','From','from')),
             amount_to:   toStr(col(r,'Amount To','amount_to','To','to')),
-            txn_date:    toStr(col(r,'Date','date','Txn Date')),
+            txn_date:    importDate(col(r,'Date','date','Txn Date')),
             remarks:     toStr(col(r,'Remarks','remarks')),
           }));
 
