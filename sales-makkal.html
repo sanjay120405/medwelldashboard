@@ -193,8 +193,8 @@
         <div class="sum-sub">Unpaid entries</div>
       </div>
       <div class="sum-card purple">
-        <div class="sum-label">Total Entries</div>
-        <div class="sum-value" id="totalEntries">0</div>
+        <div class="sum-label">Total Pending Amount</div>
+        <div class="sum-value" id="totalEntries">₹0.00</div>
         <div class="sum-sub">Filtered records</div>
       </div>
     </div>
@@ -392,17 +392,17 @@
     }
 
     function updateSummary() {
-      let total = 0, paid = 0, pending = 0;
+      let total = 0, paid = 0, pending = 0, pendingAmt = 0;
       filtered.forEach(r => {
         const a = Number(r.amount) || 0;
         total += a;
         if (r.status === 'Paid') paid += a;
-        if (r.status === 'Pending' || r.status === 'Partial') pending++;
+        if (r.status === 'Pending' || r.status === 'Partial') { pending++; pendingAmt += a; }
       });
       document.getElementById('totalAmount').textContent  = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits:2});
       document.getElementById('totalPaid').textContent    = '₹' + paid.toLocaleString('en-IN',  {minimumFractionDigits:2});
       document.getElementById('totalPending').textContent = pending;
-      document.getElementById('totalEntries').textContent = filtered.length;
+      document.getElementById('totalEntries').textContent = '₹' + pendingAmt.toLocaleString('en-IN', {minimumFractionDigits:2});
     }
 
     function parseDate(d) {
