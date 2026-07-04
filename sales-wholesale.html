@@ -469,7 +469,7 @@
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Invoice Amt (₹)</label>
-          <input id="f_invoice_amt" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <input id="f_invoice_amt" type="number" step="0.01" placeholder="0.00" oninput="calcBalance()" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Transport (₹)</label>
@@ -489,11 +489,11 @@
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Paid Amt (₹)</label>
-          <input id="f_paid_amt" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <input id="f_paid_amt" type="number" step="0.01" placeholder="0.00" oninput="calcBalance()" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
-          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Balance (₹)</label>
-          <input id="f_balance" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Balance (₹) <span style="font-size:10px;color:#10B981;font-weight:500;">(auto)</span></label>
+          <input id="f_balance" type="number" step="0.01" placeholder="0.00" readonly style="width:100%;padding:9px 12px;border:1.5px solid #D1FAE5;border-radius:8px;font-size:13px;outline:none;background:#F0FDF4;color:#065F46;font-weight:600;"/>
         </div>
         <div style="grid-column:1/-1;">
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Payment</label>
@@ -655,6 +655,12 @@
       renderTable();
     }
 
+    function calcBalance() {
+      const invoice = parseFloat(document.getElementById('f_invoice_amt').value) || 0;
+      const paid    = parseFloat(document.getElementById('f_paid_amt').value) || 0;
+      document.getElementById('f_balance').value = (invoice - paid).toFixed(2);
+    }
+
     function calcNetProfit() {
       const margin     = parseFloat(document.getElementById('f_margin').value) || 0;
       const transport  = parseFloat(document.getElementById('f_transport').value) || 0;
@@ -695,7 +701,7 @@
       document.getElementById('f_commission').value   = r.commission || '';
       document.getElementById('f_net_profit').value   = ((Number(r.margin)||0) - ((Number(r.transport)||0) + (Number(r.commission)||0))).toFixed(2);
       document.getElementById('f_paid_amt').value     = r.paid_amt || '';
-      document.getElementById('f_balance').value      = r.balance || '';
+      document.getElementById('f_balance').value      = ((Number(r.invoice_amt)||0) - (Number(r.paid_amt)||0)).toFixed(2);
       document.getElementById('f_payment').value      = r.payment || '';
       document.getElementById('modal').style.display = 'flex';
     }
@@ -727,7 +733,7 @@
         commission:  parseFloat(document.getElementById('f_commission').value) || 0,
         net_profit:  (parseFloat(document.getElementById('f_margin').value) || 0) - ((parseFloat(document.getElementById('f_transport').value) || 0) + (parseFloat(document.getElementById('f_commission').value) || 0)),
         paid_amt:    parseFloat(document.getElementById('f_paid_amt').value) || 0,
-        balance:     parseFloat(document.getElementById('f_balance').value) || 0,
+        balance:     (parseFloat(document.getElementById('f_invoice_amt').value) || 0) - (parseFloat(document.getElementById('f_paid_amt').value) || 0),
         payment:     document.getElementById('f_payment').value || null,
       };
 
@@ -834,7 +840,7 @@
             commission:  toNum(col(r, 'Commission', 'Commission (₹)')),
             net_profit:  toNum(col(r, 'Margin', 'Margin (₹)')) - (toNum(col(r, 'Transport', 'Freight', 'Transport (₹)')) + toNum(col(r, 'Commission', 'Commission (₹)'))),
             paid_amt:    toNum(col(r, 'Paid Amt', 'Paid Amt (₹)', 'Paid Amount', 'PAID AMT')),
-            balance:     toNum(col(r, 'Balance', 'Balance (₹)', 'BALANCE')),
+            balance:     toNum(col(r, 'Invoice Amt', 'Invoice Amt (₹)', 'Invoice Amount', 'Invoice Value', 'Invoice', 'INVOICE AMT')) - toNum(col(r, 'Paid Amt', 'Paid Amt (₹)', 'Paid Amount', 'PAID AMT')),
             payment:     toStr(col(r, 'Payment', 'Payment Status', 'Status')),
           }));
 
