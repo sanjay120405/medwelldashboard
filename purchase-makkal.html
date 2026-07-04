@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Purchase – Makkal Marunthagam</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #F1F5F9;
+      min-height: 100vh;
+      color: #111827;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #E0ECFF;
+      height: 60px;
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 14px;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 1px 6px rgba(37,99,235,0.06);
+    }
+
+    .back-btn {
+      display: flex; align-items: center; gap: 7px;
+      background: none; border: 1.5px solid #E5E7EB;
+      border-radius: 9px; padding: 7px 14px;
+      font-size: 13px; font-weight: 600; color: #374151;
+      text-decoration: none; transition: background .15s;
+    }
+    .back-btn:hover { background: #F9FAFB; }
+
+    .divider { width: 1px; height: 26px; background: #E5E7EB; }
+
+    .topbar-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #F0FDF4;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+
+    .topbar-info { flex: 1; }
+    .topbar-name { font-size: 16px; font-weight: 700; color: #111827; }
+    .topbar-sub  { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: .7px; }
+
+    .topbar-badge {
+      background: #F0FDF4; color: #15803D;
+      font-size: 11px; font-weight: 600;
+      padding: 4px 12px; border-radius: 20px; border: 1px solid #BBF7D0;
+    }
+
+    .breadcrumb {
+      background: #fff; border-bottom: 1px solid #E5E7EB;
+      padding: 10px 28px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #9CA3AF;
+    }
+    .breadcrumb a { color: #2563EB; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb .sep { color: #D1D5DB; }
+    .breadcrumb .current { color: #111827; font-weight: 600; }
+
+    .body { padding: 28px; }
+
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+
+    .toolbar-left { display: flex; align-items: center; gap: 10px; }
+
+    .page-title { font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -.4px; }
+
+    .record-count {
+      font-size: 12px; color: #6B7280;
+      background: #F3F4F6; padding: 4px 12px; border-radius: 20px;
+    }
+
+    .toolbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1.5px solid #E5E7EB;
+      border-radius: 9px; padding: 8px 14px;
+    }
+    .search-box input {
+      border: none; outline: none; font-size: 13px; color: #374151; width: 200px;
+    }
+
+    .btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 9px;
+      font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-primary { background: #2563EB; color: white; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #E5E7EB; }
+    .btn-outline:hover { background: #F9FAFB; }
+
+    .btn-import {
+      background: #F0FDF4; color: #15803D;
+      border: 1.5px solid #BBF7D0;
+      cursor: pointer;
+    }
+    .btn-import:hover { background: #DCFCE7; }
+
+    .btn-export {
+      background: #F5F3FF; color: #7C3AED;
+      border: 1.5px solid #DDD6FE;
+      cursor: pointer;
+    }
+    .btn-export:hover { background: #EDE9FE; }
+
+    .btn-edit {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #DBEAFE;
+      background: #EFF6FF; color: #2563EB; cursor: pointer;
+    }
+    .btn-edit:hover { background: #DBEAFE; }
+
+    .btn-del {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #FEE2E2;
+      background: #FFF5F5; color: #DC2626; cursor: pointer;
+    }
+    .btn-del:hover { background: #FEE2E2; }
+
+    .action-cell { display: flex; gap: 6px; align-items: center; }
+
+    #importOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    #importOverlay.show { display: flex; }
+    .import-box {
+      background: #fff; border-radius: 16px; padding: 32px 36px;
+      width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); text-align: center;
+    }
+    .import-box h3 { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .import-box p  { font-size: 13px; color: #6B7280; margin-bottom: 20px; }
+    .prog-track {
+      background: #E5E7EB; border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 10px;
+    }
+    .prog-bar {
+      height: 100%; background: linear-gradient(90deg,#2563EB,#60A5FA);
+      border-radius: 99px; transition: width 0.3s ease; width: 0%;
+    }
+    .prog-label { font-size: 12px; color: #6B7280; }
+
+    .summary-row {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; margin-bottom: 22px;
+    }
+
+    .sum-card {
+      background: #fff; border-radius: 12px; padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid transparent;
+    }
+    .sum-card.blue   { border-left-color: #2563EB; }
+    .sum-card.green  { border-left-color: #10B981; }
+    .sum-card.orange { border-left-color: #F59E0B; }
+    .sum-card.purple { border-left-color: #8B5CF6; }
+    .sum-card.red    { border-left-color: #EF4444; }
+
+    .sum-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+    .sum-value { font-size: 18px; font-weight: 800; color: #111827; letter-spacing: -.4px; }
+    .sum-sub   { font-size: 11px; color: #6B7280; margin-top: 3px; }
+
+    .table-wrap {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06); overflow: hidden;
+    }
+
+    .table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #F3F4F6;
+    }
+    .table-header-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .table-header-sub   { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
+
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1000px; }
+
+    thead th {
+      background: #F8FAFC; padding: 12px 16px;
+      text-align: left; font-size: 11px; font-weight: 700;
+      color: #6B7280; text-transform: uppercase; letter-spacing: .7px;
+      border-bottom: 1px solid #E5E7EB; white-space: nowrap;
+    }
+
+    tbody tr { border-bottom: 1px solid #F3F4F6; transition: background .12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F8FAFC; }
+
+    tbody td { padding: 13px 16px; color: #374151; vertical-align: middle; }
+
+    .td-date    { color: #6B7280; font-size: 12px; white-space: nowrap; }
+    .td-party   { font-weight: 600; color: #111827; }
+    .td-vch     { font-family: monospace; font-size: 12px; color: #2563EB; font-weight: 600; }
+    .td-amt     { text-align: right; font-weight: 600; color: #111827; }
+    .td-tax     { text-align: right; color: #6B7280; font-size: 12px; }
+    .td-invoice { text-align: right; font-weight: 700; color: #111827; }
+    th.right, td.right { text-align: right; }
+
+    .status-badge {
+      padding: 4px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; display: inline-block;
+    }
+    .paid     { background: #D1FAE5; color: #059669; }
+    .pending  { background: #FEF3C7; color: #D97706; }
+    .partial  { background: #DBEAFE; color: #2563EB; }
+
+    .empty-row td { text-align: center; padding: 48px; color: #9CA3AF; font-size: 14px; }
+
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-top: 1px solid #F3F4F6;
+      font-size: 12px; color: #6B7280;
+    }
+
+    .page-btns { display: flex; gap: 6px; }
+
+    .page-btn {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 1.5px solid #E5E7EB; background: #fff; color: #374151;
+    }
+    .page-btn.active { background: #2563EB; color: white; border-color: #2563EB; }
+    .page-btn:hover:not(.active) { background: #F3F4F6; }
+
+    @media (max-width: 900px) {
+      .summary-row { grid-template-columns: repeat(2, 1fr); }
+      .topbar { padding: 0 16px; }
+      .body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top bar -->
+  <div class="topbar">
+    <a class="back-btn" href="makkal.html">← Back</a>
+    <div class="divider"></div>
+    <div class="topbar-icon">🛒</div>
+    <div class="topbar-info">
+      <div class="topbar-name">Purchase Register</div>
+      <div class="topbar-sub">Makkal Marunthagam</div>
+    </div>
+    <span class="topbar-badge">PURCHASE</span>
+  </div>
+
+  <!-- Breadcrumb -->
+  <div class="breadcrumb">
+    <a href="index.html">Dashboard</a>
+    <span class="sep">›</span>
+    <a href="makkal.html">Makkal Marunthagam</a>
+    <span class="sep">›</span>
+    <span class="current">Purchase</span>
+  </div>
+
+  <div class="body">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="page-title">Purchase Register</div>
+        <span class="record-count" id="record-count">0 records</span>
+      </div>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search supplier, bill no…" oninput="filterTable()"/>
+        </div>
+        <select id="filterMonth" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Months</option>
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="filterYear" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Years</option>
+          <option value="2024">2024</option><option value="2025">2025</option>
+          <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+        </select>
+        <button class="btn btn-outline" onclick="window.print()">🖨 Print</button>
+        <button class="btn btn-export" onclick="exportData()">⬇ Export</button>
+        <label class="btn btn-import" title="Import CSV/Excel">
+          ⬆ Import
+          <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(event)"/>
+        </label>
+        <button class="btn btn-primary" onclick="addRow()">+ Add</button>
+      </div>
+    </div>
+
+    <!-- Summary cards -->
+    <div class="summary-row">
+      <div class="sum-card blue">
+        <div class="sum-label">Total Invoice Value</div>
+        <div class="sum-value" id="totalInvoice">₹0.00</div>
+        <div class="sum-sub">All entries</div>
+      </div>
+      <div class="sum-card green">
+        <div class="sum-label">Total Taxable Amount</div>
+        <div class="sum-value" id="totalTaxable">₹0.00</div>
+        <div class="sum-sub">Before taxes</div>
+      </div>
+      <div class="sum-card orange">
+        <div class="sum-label">Total GST</div>
+        <div class="sum-value" id="totalGst">₹0.00</div>
+        <div class="sum-sub">CGST + SGST + IGST</div>
+      </div>
+      <div class="sum-card purple">
+        <div class="sum-label">Total Entries</div>
+        <div class="sum-value" id="totalEntries">0</div>
+        <div class="sum-sub">Transactions</div>
+      </div>
+      <div class="sum-card red">
+        <div class="sum-label">Pending Payments</div>
+        <div class="sum-value" id="totalPending">₹0.00</div>
+        <div class="sum-sub">Awaiting payment</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <div class="table-header">
+        <div>
+          <div class="table-header-title">Purchase Entries</div>
+          <div class="table-header-sub">01-04-2026 To 31-03-2027</div>
+        </div>
+        <span style="font-size:11px;color:#9CA3AF">Makkal Marunthagam — Tiruchirapalli</span>
+      </div>
+
+      <div class="table-scroll">
+        <table id="purchaseTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Party / Supplier</th>
+              <th>Bill No. / Invoice No.</th>
+              <th class="right">Taxable Amount (₹)</th>
+              <th class="right">CGST (₹)</th>
+              <th class="right">SGST (₹)</th>
+              <th class="right">IGST (₹)</th>
+              <th class="right">Invoice Value (₹)</th>
+              <th class="right">Transport (₹)</th>
+              <th>Payment Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="purchaseBody">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span id="paginationInfo">Showing 0–0 of 0</span>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Import progress overlay -->
+  <div id="importOverlay">
+    <div class="import-box">
+      <h3>Importing Records</h3>
+      <p id="importMsg">Reading file…</p>
+      <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-label" id="progLabel">0 / 0 rows</div>
+    </div>
+  </div>
+
+  <!-- Add/Edit modal -->
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <span id="modalTitle" style="font-size:16px;font-weight:700;">Add Purchase Entry</span>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Date</label>
+          <input id="f_date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Party / Supplier</label>
+          <input id="f_party" type="text" placeholder="Supplier name" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Bill No. / Invoice No.</label>
+          <input id="f_vch" type="text" placeholder="e.g. SI-2026-27/047" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Taxable Amount (₹)</label>
+          <input id="f_taxable" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">CGST (₹)</label>
+          <input id="f_cgst" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">SGST (₹)</label>
+          <input id="f_sgst" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">IGST (₹)</label>
+          <input id="f_igst" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Invoice Value (₹)</label>
+          <input id="f_invoice" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Transport (₹)</label>
+          <input id="f_transport" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Payment Status</label>
+          <select id="f_status" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;">
+            <option value="Pending">Pending</option>
+            <option value="Paid">Paid</option>
+            <option value="Partial">Partial</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+        <button onclick="closeModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="saveRow()" style="padding:9px 20px;background:#2563EB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPA_URL = 'https://ascolgmqofzoaqukkhvk.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
+    const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    let data = [], filtered = [], currentPage = 1, editingId = null;
+    const PAGE_SIZE = 100000;
+
+    async function loadData() {
+      document.getElementById('purchaseBody').innerHTML =
+        '<tr class="empty-row"><td colspan="12" style="color:#9CA3AF">Loading…</td></tr>';
+      const FETCH_SIZE = 1000;
+      let allRows = [], from = 0;
+      while (true) {
+        const { data: rows, error } = await db
+          .from('makkal_purchases')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + FETCH_SIZE - 1);
+        if (error) {
+          document.getElementById('purchaseBody').innerHTML =
+            `<tr class="empty-row"><td colspan="12" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+          return;
+        }
+        if (!rows || rows.length === 0) break;
+        allRows = allRows.concat(rows);
+        if (rows.length < FETCH_SIZE) break;
+        from += FETCH_SIZE;
+      }
+      data = allRows;
+      filtered = [...data];
+      currentPage = 1;
+      renderTable();
+    }
+
+    function fmt(n) {
+      if (!n || n === 0) return '—';
+      const sign = n < 0 ? '-' : '';
+      return sign + '₹' + Math.abs(Number(n)).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
+    }
+
+    function statusBadge(s) {
+      const cls = s === 'Paid' ? 'paid' : s === 'Partial' ? 'partial' : 'pending';
+      return `<span class="status-badge ${cls}">${s || 'Pending'}</span>`;
+    }
+
+    function renderTable() {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, filtered.length);
+      const slice = filtered.slice(start, end);
+      const tbody = document.getElementById('purchaseBody');
+
+      if (slice.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="12">No records found</td></tr>';
+      } else {
+        tbody.innerHTML = slice.map((r, i) => `
+          <tr>
+            <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
+            <td class="td-date">${r.txn_date || '—'}</td>
+            <td class="td-party">${r.party || '—'}</td>
+            <td class="td-vch">${r.vch || '—'}</td>
+            <td class="td-amt right">${fmt(r.taxable)}</td>
+            <td class="td-tax right">${fmt(r.cgst)}</td>
+            <td class="td-tax right">${fmt(r.sgst)}</td>
+            <td class="td-tax right">${fmt(r.igst)}</td>
+            <td class="td-invoice right">${fmt(r.invoice)}</td>
+            <td class="td-tax right">${fmt(r.transport)}</td>
+            <td>${statusBadge(r.status)}</td>
+            <td><div class="action-cell">
+              <button class="btn-edit" onclick="editRow('${r.id}')">✏ Edit</button>
+              <button class="btn-del"  onclick="deleteRow('${r.id}')">🗑 Delete</button>
+            </div></td>
+          </tr>`).join('');
+      }
+
+      document.getElementById('paginationInfo').textContent =
+        `Showing ${filtered.length ? start+1 : 0}–${end} of ${filtered.length}`;
+      document.getElementById('record-count').textContent = filtered.length + ' records';
+
+      renderPagination();
+      updateSummary();
+    }
+
+    function renderPagination() {
+      const total = Math.ceil(filtered.length / PAGE_SIZE);
+      const btns  = document.getElementById('pageBtns');
+      btns.innerHTML = '';
+      for (let p = 1; p <= total; p++) {
+        const b = document.createElement('div');
+        b.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = p;
+        b.onclick = () => { currentPage = p; renderTable(); };
+        btns.appendChild(b);
+      }
+    }
+
+    function updateSummary() {
+      let invoice=0, taxable=0, gst=0, pending=0;
+      filtered.forEach(r => {
+        invoice += Number(r.invoice) || 0;
+        taxable += Number(r.taxable) || 0;
+        gst     += (Number(r.cgst)||0) + (Number(r.sgst)||0) + (Number(r.igst)||0);
+        if (!r.status || r.status === 'Pending') pending += Number(r.invoice) || 0;
+      });
+      document.getElementById('totalInvoice').textContent  = '₹' + invoice.toLocaleString('en-IN',{minimumFractionDigits:2});
+      document.getElementById('totalTaxable').textContent  = '₹' + taxable.toLocaleString('en-IN',{minimumFractionDigits:2});
+      document.getElementById('totalGst').textContent      = '₹' + gst.toLocaleString('en-IN',{minimumFractionDigits:2});
+      document.getElementById('totalEntries').textContent  = filtered.length;
+      document.getElementById('totalPending').textContent  = '₹' + pending.toLocaleString('en-IN',{minimumFractionDigits:2});
+    }
+
+    function parseDate(d) {
+      if (!d) return null;
+      d = String(d).trim();
+      let m;
+      m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return { year: m[1], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
+      if (m) return { year: m[3], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{2})$/);
+      if (m) return { year: '20'+m[3], month: m[2].padStart(2,'0') };
+      try { const dt = new Date(d); if (!isNaN(dt)) return { year: String(dt.getFullYear()), month: String(dt.getMonth()+1).padStart(2,'0') }; } catch(e) {}
+      return null;
+    }
+
+    function filterTable() {
+      const q     = document.getElementById('searchInput').value.toLowerCase().trim();
+      const month = document.getElementById('filterMonth').value;
+      const year  = document.getElementById('filterYear').value;
+      filtered = data.filter(r => {
+        if (q) {
+          const hit = (r.party||'').toLowerCase().includes(q) ||
+                      (r.vch||'').toLowerCase().includes(q) ||
+                      (r.txn_date||'').toLowerCase().includes(q) ||
+                      (r.status||'').toLowerCase().includes(q);
+          if (!hit) return false;
+        }
+        if (month || year) {
+          const p = parseDate(r.txn_date);
+          if (!p) return false;
+          if (month && p.month !== month) return false;
+          if (year  && p.year  !== year)  return false;
+        }
+        return true;
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    function addRow() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Purchase Entry';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Purchase Entry';
+      ['f_date','f_party','f_vch','f_taxable','f_cgst','f_sgst','f_igst','f_invoice','f_transport']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('f_status').value = 'Pending';
+    }
+
+    function editRow(id) {
+      const r = data.find(x => x.id === id);
+      if (!r) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Purchase Entry';
+      document.getElementById('f_date').value      = r.txn_date || '';
+      document.getElementById('f_party').value     = r.party || '';
+      document.getElementById('f_vch').value       = r.vch || '';
+      document.getElementById('f_taxable').value   = r.taxable || '';
+      document.getElementById('f_cgst').value      = r.cgst || '';
+      document.getElementById('f_sgst').value      = r.sgst || '';
+      document.getElementById('f_igst').value      = r.igst || '';
+      document.getElementById('f_invoice').value   = r.invoice || '';
+      document.getElementById('f_transport').value = r.transport || '';
+      document.getElementById('f_status').value    = r.status || 'Pending';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    async function deleteRow(id) {
+      if (!confirm('Delete this purchase entry? This cannot be undone.')) return;
+      const { error } = await db.from('makkal_purchases').delete().eq('id', id);
+      if (error) { alert('Delete failed: ' + error.message); return; }
+      data     = data.filter(x => x.id !== id);
+      filtered = filtered.filter(x => x.id !== id);
+      if ((currentPage - 1) * PAGE_SIZE >= filtered.length && currentPage > 1) currentPage--;
+      renderTable();
+    }
+
+    async function saveRow() {
+      const btn = document.querySelector('[onclick="saveRow()"]');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      const row = {
+        txn_date:  document.getElementById('f_date').value || null,
+        party:     document.getElementById('f_party').value || null,
+        vch:       document.getElementById('f_vch').value || null,
+        taxable:   parseFloat(document.getElementById('f_taxable').value) || 0,
+        cgst:      parseFloat(document.getElementById('f_cgst').value) || 0,
+        sgst:      parseFloat(document.getElementById('f_sgst').value) || 0,
+        igst:      parseFloat(document.getElementById('f_igst').value) || 0,
+        invoice:   parseFloat(document.getElementById('f_invoice').value) || 0,
+        transport: parseFloat(document.getElementById('f_transport').value) || 0,
+        status:    document.getElementById('f_status').value || 'Pending',
+      };
+
+      if (editingId) {
+        const { error } = await db.from('makkal_purchases').update(row).eq('id', editingId);
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Update failed: ' + error.message); return; }
+        const idx = data.findIndex(x => x.id === editingId);
+        if (idx !== -1) data[idx] = { ...data[idx], ...row };
+        filtered = [...data];
+      } else {
+        const { data: inserted, error } = await db.from('makkal_purchases').insert([row]).select();
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Save failed: ' + error.message); return; }
+        data.unshift(inserted[0]);
+        filtered = [...data];
+        currentPage = 1;
+      }
+      renderTable();
+      closeModal();
+    }
+
+    function exportData() {
+      if (!filtered.length) { alert('No records to export.'); return; }
+      const rows = filtered.map((r, i) => ({
+        '#':                    i + 1,
+        'Date':                 r.txn_date || '',
+        'Party / Supplier':     r.party || '',
+        'Bill No./Invoice No.': r.vch || '',
+        'Taxable Amount (₹)':   Number(r.taxable) || 0,
+        'CGST (₹)':             Number(r.cgst) || 0,
+        'SGST (₹)':             Number(r.sgst) || 0,
+        'IGST (₹)':             Number(r.igst) || 0,
+        'Invoice Value (₹)':    Number(r.invoice) || 0,
+        'Transport (₹)':        Number(r.transport) || 0,
+        'Payment Status':       r.status || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Purchases');
+      XLSX.writeFile(wb, 'Makkal_Purchases_' + new Date().toISOString().slice(0,10) + '.xlsx');
+    }
+
+    function col(row, ...keys) {
+      for (const k of keys)
+        for (const rk of Object.keys(row))
+          if (rk.trim().toLowerCase() === k.toLowerCase() && row[rk] != null && row[rk] !== '') return row[rk];
+      return null;
+    }
+    function toStr(v) {
+      if (v == null || v === '') return null;
+      if (v instanceof Date) return v.toLocaleDateString('en-IN', {day:'2-digit',month:'2-digit',year:'numeric'});
+      return String(v).trim() || null;
+    }
+    function toNum(v) {
+      if (v == null || v === '') return 0;
+      const n = parseFloat(String(v).replace(/[₹,\s]/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    function normalizeStatus(v) {
+      if (!v) return 'Pending';
+      const s = String(v).trim().toLowerCase();
+      if (s === 'paid') return 'Paid';
+      if (s === 'partial') return 'Partial';
+      return 'Pending';
+    }
+    function setProgress(done, total, msg) {
+      document.getElementById('progBar').style.width   = (total ? Math.round(done/total*100) : 0) + '%';
+      document.getElementById('progLabel').textContent = done + ' / ' + total + ' rows';
+      if (msg) document.getElementById('importMsg').textContent = msg;
+    }
+
+    function importFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      e.target.value = '';
+
+      const overlay = document.getElementById('importOverlay');
+      overlay.classList.add('show');
+      setProgress(0, 0, 'Reading file…');
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const wb   = XLSX.read(evt.target.result, { type: 'array', cellDates: false });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+          if (!rows.length) {
+            overlay.classList.remove('show');
+            alert('No data rows found in the file.');
+            return;
+          }
+
+          const mapped = rows.map(r => ({
+            txn_date:  toStr(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
+            party:     toStr(col(r, 'Party', 'Party Name', 'Party / Supplier', 'Party/Supplier', 'Supplier', 'Vendor')),
+            vch:       toStr(col(r, 'Bill No./Invoice No.', 'Bill No', 'Bill No.', 'Invoice No', 'Invoice No.', 'Vch No', 'Voucher No')),
+            taxable:   toNum(col(r, 'Taxable Amount', 'Taxable Amount (₹)', 'Taxable', 'Taxable Amt')),
+            cgst:      toNum(col(r, 'CGST', 'CGST (₹)')),
+            sgst:      toNum(col(r, 'SGST', 'SGST (₹)')),
+            igst:      toNum(col(r, 'IGST', 'IGST (₹)')),
+            invoice:   toNum(col(r, 'Invoice Value', 'Invoice Value (₹)', 'Invoice Amount', 'Invoice', 'Inv Value')),
+            transport: toNum(col(r, 'Transport', 'Freight', 'Transport (₹)')),
+            status:    normalizeStatus(col(r, 'Payment Status', 'Status', 'Payment')),
+          }));
+
+          const BATCH = 50;
+          let inserted = 0;
+          const total  = mapped.length;
+          setProgress(0, total, 'Uploading records…');
+
+          for (let i = 0; i < total; i += BATCH) {
+            const chunk = mapped.slice(i, i + BATCH);
+            const { error } = await db.from('makkal_purchases').insert(chunk);
+            if (error) {
+              overlay.classList.remove('show');
+              alert('Upload failed at row ' + (i + 1) + ':\n' + error.message);
+              return;
+            }
+            inserted += chunk.length;
+            setProgress(inserted, total, 'Uploading records…');
+          }
+
+          overlay.classList.remove('show');
+          alert('✅ ' + inserted + ' records imported successfully!');
+          loadData();
+        } catch (err) {
+          overlay.classList.remove('show');
+          alert('Failed to read file:\n' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
