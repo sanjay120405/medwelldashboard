@@ -345,12 +345,9 @@
       <div>
         <label class="field-label">Payment Mode</label>
         <select id="f_mode" class="field-input">
+          <option value="Medwell cub">Medwell cub</option>
           <option value="Cash">Cash</option>
-          <option value="Cheque">Cheque</option>
-          <option value="NEFT">NEFT</option>
-          <option value="RTGS">RTGS</option>
-          <option value="UPI">UPI</option>
-          <option value="Other">Other</option>
+          <option value="Others">Others</option>
         </select>
       </div>
       <div style="grid-column:1/-1;">
@@ -590,7 +587,7 @@
     document.getElementById('status_preview').textContent = 'No bills selected';
     document.getElementById('total_preview').textContent = '₹0.00';
     document.getElementById('f_date').value    = '';
-    document.getElementById('f_mode').value    = 'Cash';
+    document.getElementById('f_mode').value    = 'Medwell cub';
     document.getElementById('f_remarks').value = '';
     currentBills = [];
   }
