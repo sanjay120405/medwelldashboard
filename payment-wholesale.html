@@ -378,7 +378,7 @@
       </div>
       <div>
         <label class="field-label">Amount Received (&#x20B9;)</label>
-        <input id="f_amount_received" class="field-input" type="number" step="0.01" min="0" placeholder="0.00"/>
+        <input id="f_amount_received" class="field-input" type="number" step="0.01" min="0" placeholder="0.00" oninput="updateBillSummary()"/>
       </div>
       <div style="grid-column:1/-1;">
         <label class="field-label">Remarks</label>
@@ -710,6 +710,12 @@
     updateBillSummary();
   }
 
+  function calcStatus(total, amountReceived) {
+    if (!amountReceived || amountReceived <= 0) return 'Pending';
+    if (amountReceived >= total) return 'Paid';
+    return 'Partial';
+  }
+
   function updateBillSummary() {
     const allCB = document.querySelectorAll('#bill_list input[type=checkbox]');
     const checked = [...allCB].filter(cb => cb.checked);
@@ -718,9 +724,8 @@
       return sum + (Number(currentBills[idx]?.invoice_amt) || 0);
     }, 0);
 
-    let status = 'Pending';
-    if (checked.length > 0 && checked.length === allCB.length) status = 'Paid';
-    else if (checked.length > 0) status = 'Partial';
+    const amtReceived = parseFloat(document.getElementById('f_amount_received')?.value) || 0;
+    const status = checked.length > 0 ? calcStatus(total, amtReceived) : 'Pending';
 
     const statusColor = status === 'Paid' ? '#059669' : status === 'Partial' ? '#2563EB' : '#D97706';
     document.getElementById('status_preview').innerHTML =
@@ -734,9 +739,8 @@
     const checked = [...allCB].filter(cb => cb.checked);
     const billNos = checked.map(cb => currentBills[parseInt(cb.dataset.idx)]?.bill_no).filter(Boolean);
     const total   = checked.reduce((sum, cb) => sum + (Number(currentBills[parseInt(cb.dataset.idx)]?.invoice_amt) || 0), 0);
-    let status = 'Pending';
-    if (checked.length > 0 && checked.length === allCB.length) status = 'Paid';
-    else if (checked.length > 0) status = 'Partial';
+    const amtReceived = parseFloat(document.getElementById('f_amount_received').value) || 0;
+    const status = checked.length > 0 ? calcStatus(total, amtReceived) : 'Pending';
     return { billNos, total, status };
   }
 
