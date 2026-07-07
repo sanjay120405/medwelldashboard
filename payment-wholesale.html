@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Payment &ndash; Medwell Wholesale</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #F1F5F9;
+      min-height: 100vh;
+      color: #111827;
+    }
+
+    .topbar {
+      background: #fff;
+      border-bottom: 1px solid #E0ECFF;
+      height: 60px;
+      display: flex; align-items: center;
+      padding: 0 28px; gap: 14px;
+      position: sticky; top: 0; z-index: 50;
+      box-shadow: 0 1px 6px rgba(37,99,235,0.06);
+    }
+
+    .back-btn {
+      display: flex; align-items: center; gap: 7px;
+      background: none; border: 1.5px solid #E5E7EB;
+      border-radius: 9px; padding: 7px 14px;
+      font-size: 13px; font-weight: 600; color: #374151;
+      text-decoration: none; transition: background .15s;
+    }
+    .back-btn:hover { background: #F9FAFB; }
+
+    .divider { width: 1px; height: 26px; background: #E5E7EB; }
+
+    .topbar-icon {
+      width: 36px; height: 36px; border-radius: 10px;
+      background: #EFF6FF;
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+
+    .topbar-info { flex: 1; }
+    .topbar-name { font-size: 16px; font-weight: 700; color: #111827; }
+    .topbar-sub  { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: .7px; }
+
+    .topbar-badge {
+      background: #EFF6FF; color: #2563EB;
+      font-size: 11px; font-weight: 600;
+      padding: 4px 12px; border-radius: 20px; border: 1px solid #BFDBFE;
+    }
+
+    .breadcrumb {
+      background: #fff; border-bottom: 1px solid #E5E7EB;
+      padding: 10px 28px;
+      display: flex; align-items: center; gap: 8px;
+      font-size: 12px; color: #9CA3AF;
+    }
+    .breadcrumb a { color: #2563EB; text-decoration: none; }
+    .breadcrumb a:hover { text-decoration: underline; }
+    .breadcrumb .sep { color: #D1D5DB; }
+    .breadcrumb .current { color: #111827; font-weight: 600; }
+
+    .body { padding: 28px; }
+
+    .toolbar {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px; flex-wrap: wrap; gap: 12px;
+    }
+    .toolbar-left { display: flex; align-items: center; gap: 10px; }
+    .page-title { font-size: 20px; font-weight: 800; color: #111827; letter-spacing: -.4px; }
+    .record-count {
+      font-size: 12px; color: #6B7280;
+      background: #F3F4F6; padding: 4px 12px; border-radius: 20px;
+    }
+    .toolbar-right { display: flex; align-items: center; gap: 10px; }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      background: #fff; border: 1.5px solid #E5E7EB;
+      border-radius: 9px; padding: 8px 14px;
+    }
+    .search-box input {
+      border: none; outline: none; font-size: 13px; color: #374151; width: 200px;
+    }
+
+    .btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 9px;
+      font-size: 13px; font-weight: 600; cursor: pointer; border: none;
+    }
+    .btn-primary { background: #2563EB; color: white; }
+    .btn-primary:hover { background: #1D4ED8; }
+    .btn-outline { background: #fff; color: #374151; border: 1.5px solid #E5E7EB; }
+    .btn-outline:hover { background: #F9FAFB; }
+    .btn-import { background: #F0FDF4; color: #15803D; border: 1.5px solid #BBF7D0; cursor: pointer; }
+    .btn-import:hover { background: #DCFCE7; }
+    .btn-export { background: #F5F3FF; color: #7C3AED; border: 1.5px solid #DDD6FE; cursor: pointer; }
+    .btn-export:hover { background: #EDE9FE; }
+
+    .btn-edit {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #DBEAFE;
+      background: #EFF6FF; color: #2563EB; cursor: pointer;
+    }
+    .btn-edit:hover { background: #DBEAFE; }
+    .btn-del {
+      padding: 4px 10px; font-size: 11px; font-weight: 600;
+      border-radius: 6px; border: 1.5px solid #FEE2E2;
+      background: #FFF5F5; color: #DC2626; cursor: pointer;
+    }
+    .btn-del:hover { background: #FEE2E2; }
+    .action-cell { display: flex; gap: 6px; align-items: center; }
+
+    #importOverlay {
+      display: none; position: fixed; inset: 0;
+      background: rgba(0,0,0,0.45); z-index: 9999;
+      align-items: center; justify-content: center;
+    }
+    #importOverlay.show { display: flex; }
+    .import-box {
+      background: #fff; border-radius: 16px; padding: 32px 36px;
+      width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,0.2); text-align: center;
+    }
+    .import-box h3 { font-size: 16px; font-weight: 700; color: #111827; margin-bottom: 6px; }
+    .import-box p  { font-size: 13px; color: #6B7280; margin-bottom: 20px; }
+    .prog-track { background: #E5E7EB; border-radius: 99px; height: 10px; overflow: hidden; margin-bottom: 10px; }
+    .prog-bar { height: 100%; background: linear-gradient(90deg,#2563EB,#60A5FA); border-radius: 99px; transition: width 0.3s ease; width: 0%; }
+    .prog-label { font-size: 12px; color: #6B7280; }
+
+    .summary-row {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px;
+    }
+    .sum-card {
+      background: #fff; border-radius: 12px; padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.05); border-left: 4px solid transparent;
+    }
+    .sum-card.blue   { border-left-color: #2563EB; }
+    .sum-card.green  { border-left-color: #10B981; }
+    .sum-card.orange { border-left-color: #F59E0B; }
+    .sum-card.purple { border-left-color: #8B5CF6; }
+    .sum-label { font-size: 11px; color: #9CA3AF; text-transform: uppercase; letter-spacing: .7px; margin-bottom: 6px; }
+    .sum-value { font-size: 18px; font-weight: 800; color: #111827; letter-spacing: -.4px; }
+    .sum-sub   { font-size: 11px; color: #6B7280; margin-top: 3px; }
+
+    .table-wrap {
+      background: #fff; border-radius: 14px;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06); overflow: hidden;
+    }
+    .table-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid #F3F4F6;
+    }
+    .table-header-title { font-size: 14px; font-weight: 700; color: #111827; }
+    .table-header-sub   { font-size: 11px; color: #9CA3AF; margin-top: 2px; }
+    .table-scroll { overflow-x: auto; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 900px; }
+    thead th {
+      background: #F8FAFC; padding: 12px 16px;
+      text-align: left; font-size: 11px; font-weight: 700;
+      color: #6B7280; text-transform: uppercase; letter-spacing: .7px;
+      border-bottom: 1px solid #E5E7EB; white-space: nowrap;
+    }
+    tbody tr { border-bottom: 1px solid #F3F4F6; transition: background .12s; }
+    tbody tr:last-child { border-bottom: none; }
+    tbody tr:hover { background: #F8FAFC; }
+    tbody td { padding: 13px 16px; color: #374151; vertical-align: middle; }
+
+    .td-date  { color: #6B7280; font-size: 12px; white-space: nowrap; }
+    .td-party { font-weight: 600; color: #111827; }
+    .td-ref   { font-family: monospace; font-size: 12px; color: #2563EB; font-weight: 600; }
+    .td-amt   { text-align: right; font-weight: 700; color: #111827; }
+    th.right, td.right { text-align: right; }
+
+    .mode-badge {
+      padding: 3px 10px; border-radius: 20px;
+      font-size: 11px; font-weight: 700; display: inline-block;
+    }
+    .mode-cash   { background: #D1FAE5; color: #059669; }
+    .mode-cheque { background: #DBEAFE; color: #2563EB; }
+    .mode-neft   { background: #EDE9FE; color: #7C3AED; }
+    .mode-rtgs   { background: #FEF3C7; color: #D97706; }
+    .mode-upi    { background: #FCE7F3; color: #DB2777; }
+    .mode-other  { background: #F3F4F6; color: #6B7280; }
+
+    .empty-row td { text-align: center; padding: 48px; color: #9CA3AF; font-size: 14px; }
+
+    .pagination {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 14px 20px; border-top: 1px solid #F3F4F6;
+      font-size: 12px; color: #6B7280;
+    }
+    .page-btns { display: flex; gap: 6px; }
+    .page-btn {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; cursor: pointer;
+      border: 1.5px solid #E5E7EB; background: #fff; color: #374151;
+    }
+    .page-btn.active { background: #2563EB; color: white; border-color: #2563EB; }
+    .page-btn:hover:not(.active) { background: #F3F4F6; }
+
+    @media (max-width: 900px) {
+      .summary-row { grid-template-columns: repeat(2, 1fr); }
+      .topbar { padding: 0 16px; }
+      .body { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="topbar">
+    <a class="back-btn" href="wholesale.html">&#8592; Back</a>
+    <div class="divider"></div>
+    <div class="topbar-icon">&#x1F4B3;</div>
+    <div class="topbar-info">
+      <div class="topbar-name">Payment Register</div>
+      <div class="topbar-sub">Medwell Wholesale</div>
+    </div>
+    <span class="topbar-badge">PAYMENT</span>
+  </div>
+
+  <div class="breadcrumb">
+    <a href="index.html">Dashboard</a>
+    <span class="sep">&#x203A;</span>
+    <a href="wholesale.html">Medwell Wholesale</a>
+    <span class="sep">&#x203A;</span>
+    <span class="current">Payment</span>
+  </div>
+
+  <div class="body">
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="page-title">Payment Register</div>
+        <span class="record-count" id="record-count">0 records</span>
+      </div>
+      <div class="toolbar-right">
+        <div class="search-box">
+          <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+          </svg>
+          <input type="text" id="searchInput" placeholder="Search party, ref no…" oninput="filterTable()"/>
+        </div>
+        <select id="filterMonth" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Months</option>
+          <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+          <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+          <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+          <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+        </select>
+        <select id="filterYear" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+          <option value="">All Years</option>
+          <option value="2024">2024</option><option value="2025">2025</option>
+          <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+        </select>
+        <button class="btn btn-outline" onclick="window.print()">&#x1F5A8; Print</button>
+        <button class="btn btn-export" onclick="exportData()">&#x2B07; Export</button>
+        <label class="btn btn-import" title="Import CSV/Excel">
+          &#x2B06; Import
+          <input type="file" accept=".csv,.xlsx,.xls" style="display:none" onchange="importFile(event)"/>
+        </label>
+        <button class="btn btn-primary" onclick="addRow()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="summary-row">
+      <div class="sum-card blue">
+        <div class="sum-label">Total Amount Paid</div>
+        <div class="sum-value" id="totalAmount">&#x20B9;0.00</div>
+        <div class="sum-sub">All entries</div>
+      </div>
+      <div class="sum-card green">
+        <div class="sum-label">Cash Payments</div>
+        <div class="sum-value" id="totalCash">&#x20B9;0.00</div>
+        <div class="sum-sub">Cash mode</div>
+      </div>
+      <div class="sum-card orange">
+        <div class="sum-label">Bank / Digital</div>
+        <div class="sum-value" id="totalBank">&#x20B9;0.00</div>
+        <div class="sum-sub">Cheque / NEFT / RTGS / UPI</div>
+      </div>
+      <div class="sum-card purple">
+        <div class="sum-label">Total Entries</div>
+        <div class="sum-value" id="totalEntries">0</div>
+        <div class="sum-sub">Transactions</div>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <div>
+          <div class="table-header-title">Payment Entries</div>
+          <div class="table-header-sub">01-04-2026 To 31-03-2027</div>
+        </div>
+        <span style="font-size:11px;color:#9CA3AF">MEDWELL LOGIX &#x2014; Tiruchirapalli</span>
+      </div>
+
+      <div class="table-scroll">
+        <table id="paymentTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Date</th>
+              <th>Party / Vendor</th>
+              <th>Ref No.</th>
+              <th>Towards</th>
+              <th class="right">Amount (&#x20B9;)</th>
+              <th>Mode</th>
+              <th>Remarks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="paymentBody"></tbody>
+        </table>
+      </div>
+
+      <div class="pagination">
+        <span id="paginationInfo">Showing 0&#x2013;0 of 0</span>
+        <div class="page-btns" id="pageBtns"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="importOverlay">
+    <div class="import-box">
+      <h3>Importing Records</h3>
+      <p id="importMsg">Reading file&#x2026;</p>
+      <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-label" id="progLabel">0 / 0 rows</div>
+    </div>
+  </div>
+
+  <div id="modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.35);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px;width:580px;max-width:95vw;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <span id="modalTitle" style="font-size:16px;font-weight:700;">Add Payment Entry</span>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;">&#x2715;</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Date</label>
+          <input id="f_date" type="date" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Party / Vendor</label>
+          <input id="f_party" type="text" placeholder="Supplier / Vendor name" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Ref No. (Cheque / UTR)</label>
+          <input id="f_ref_no" type="text" placeholder="e.g. CHQ-001 / UTR123" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Towards (Invoice / Bill No.)</label>
+          <input id="f_towards" type="text" placeholder="e.g. INV-001" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Amount (&#x20B9;)</label>
+          <input id="f_amount" type="number" step="0.01" placeholder="0.00" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Payment Mode</label>
+          <select id="f_mode" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;">
+            <option value="Cash">Cash</option>
+            <option value="Cheque">Cheque</option>
+            <option value="NEFT">NEFT</option>
+            <option value="RTGS">RTGS</option>
+            <option value="UPI">UPI</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1;">
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Remarks</label>
+          <input id="f_remarks" type="text" placeholder="Optional notes" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end;">
+        <button onclick="closeModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+        <button onclick="saveRow()" style="padding:9px 20px;background:#2563EB;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Entry</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SUPA_URL = 'https://ascolgmqofzoaqukkhvk.supabase.co';
+    const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
+    const db = supabase.createClient(SUPA_URL, SUPA_KEY);
+
+    let data = [], filtered = [], currentPage = 1, editingId = null;
+    const PAGE_SIZE = 50;
+
+    async function loadData() {
+      document.getElementById('paymentBody').innerHTML =
+        '<tr class="empty-row"><td colspan="9" style="text-align:center;padding:48px;color:#9CA3AF">Loading&#x2026;</td></tr>';
+      const FETCH_SIZE = 1000;
+      let allRows = [], from = 0;
+      while (true) {
+        const { data: rows, error } = await db
+          .from('wholesale_payments')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, from + FETCH_SIZE - 1);
+        if (error) {
+          document.getElementById('paymentBody').innerHTML =
+            `<tr class="empty-row"><td colspan="9" style="text-align:center;padding:48px;color:#EF4444">Error: ${error.message}</td></tr>`;
+          return;
+        }
+        if (!rows || rows.length === 0) break;
+        allRows = allRows.concat(rows);
+        if (rows.length < FETCH_SIZE) break;
+        from += FETCH_SIZE;
+      }
+      data = allRows;
+      filtered = [...data];
+      currentPage = 1;
+      renderTable();
+    }
+
+    function fmt(n) {
+      if (!n || n === 0) return '&#x2014;';
+      return '&#x20B9;' + Number(n).toLocaleString('en-IN', {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    function modeBadge(m) {
+      const cls = {
+        'Cash':'mode-cash','Cheque':'mode-cheque','NEFT':'mode-neft',
+        'RTGS':'mode-rtgs','UPI':'mode-upi'
+      }[m] || 'mode-other';
+      return `<span class="mode-badge ${cls}">${m || '&#x2014;'}</span>`;
+    }
+
+    function renderTable() {
+      const start = (currentPage - 1) * PAGE_SIZE;
+      const end   = Math.min(start + PAGE_SIZE, filtered.length);
+      const slice = filtered.slice(start, end);
+      const tbody = document.getElementById('paymentBody');
+
+      if (slice.length === 0) {
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="9" style="text-align:center;padding:48px;color:#9CA3AF">No records found</td></tr>';
+      } else {
+        tbody.innerHTML = slice.map((r, i) => `
+          <tr>
+            <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
+            <td class="td-date">${r.txn_date || '&#x2014;'}</td>
+            <td class="td-party">${r.party || '&#x2014;'}</td>
+            <td class="td-ref">${r.ref_no || '&#x2014;'}</td>
+            <td style="font-size:12px;color:#374151">${r.towards || '&#x2014;'}</td>
+            <td class="td-amt right">${fmt(r.amount)}</td>
+            <td>${modeBadge(r.mode)}</td>
+            <td style="font-size:12px;color:#6B7280">${r.remarks || '&#x2014;'}</td>
+            <td><div class="action-cell">
+              <button class="btn-edit" onclick="editRow('${r.id}')">&#x270F; Edit</button>
+              <button class="btn-del"  onclick="deleteRow('${r.id}')">&#x1F5D1; Delete</button>
+            </div></td>
+          </tr>`).join('');
+      }
+
+      document.getElementById('paginationInfo').textContent =
+        `Showing ${filtered.length ? start+1 : 0}–${end} of ${filtered.length}`;
+      document.getElementById('record-count').textContent = filtered.length + ' records';
+      renderPagination();
+      updateSummary();
+    }
+
+    function renderPagination() {
+      const total = Math.ceil(filtered.length / PAGE_SIZE);
+      const btns  = document.getElementById('pageBtns');
+      btns.innerHTML = '';
+      for (let p = 1; p <= total; p++) {
+        const b = document.createElement('div');
+        b.className = 'page-btn' + (p === currentPage ? ' active' : '');
+        b.textContent = p;
+        b.onclick = () => { currentPage = p; renderTable(); };
+        btns.appendChild(b);
+      }
+    }
+
+    function updateSummary() {
+      let total = 0, cash = 0, bank = 0;
+      filtered.forEach(r => {
+        const a = Number(r.amount) || 0;
+        total += a;
+        if (r.mode === 'Cash') cash += a;
+        else bank += a;
+      });
+      document.getElementById('totalAmount').textContent  = '₹' + total.toLocaleString('en-IN', {minimumFractionDigits:2});
+      document.getElementById('totalCash').textContent    = '₹' + cash.toLocaleString('en-IN',  {minimumFractionDigits:2});
+      document.getElementById('totalBank').textContent    = '₹' + bank.toLocaleString('en-IN',  {minimumFractionDigits:2});
+      document.getElementById('totalEntries').textContent = filtered.length;
+    }
+
+    function parseDate(d) {
+      if (!d) return null;
+      d = String(d).trim();
+      let m;
+      m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return { year: m[1], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+      if (m) return { year: m[3], month: m[2].padStart(2,'0') };
+      m = d.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+      if (m) return { year: '20'+m[3], month: m[2].padStart(2,'0') };
+      try { const dt = new Date(d); if (!isNaN(dt)) return { year: String(dt.getFullYear()), month: String(dt.getMonth()+1).padStart(2,'0') }; } catch(e) {}
+      return null;
+    }
+
+    function filterTable() {
+      const q     = document.getElementById('searchInput').value.toLowerCase().trim();
+      const month = document.getElementById('filterMonth').value;
+      const year  = document.getElementById('filterYear').value;
+      filtered = data.filter(r => {
+        if (q) {
+          const hit = (r.party||'').toLowerCase().includes(q) ||
+                      (r.ref_no||'').toLowerCase().includes(q) ||
+                      (r.towards||'').toLowerCase().includes(q) ||
+                      (r.mode||'').toLowerCase().includes(q) ||
+                      (r.remarks||'').toLowerCase().includes(q) ||
+                      (r.txn_date||'').toLowerCase().includes(q);
+          if (!hit) return false;
+        }
+        if (month || year) {
+          const p = parseDate(r.txn_date);
+          if (!p) return false;
+          if (month && p.month !== month) return false;
+          if (year  && p.year  !== year)  return false;
+        }
+        return true;
+      });
+      currentPage = 1;
+      renderTable();
+    }
+
+    function fmtDate(v) {
+      if (!v) return null;
+      const m = String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+      return m ? m[3] + '-' + m[2] + '-' + m[1] : (v || null);
+    }
+    function toInputDate(v) {
+      if (!v) return '';
+      const m = String(v).match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);
+      return m ? m[3] + '-' + m[2].padStart(2,'0') + '-' + m[1].padStart(2,'0') : v;
+    }
+    function importDate(v) {
+      if (!v) return null;
+      v = String(v).trim();
+      let m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+      m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+      if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-20' + m[3];
+      return v || null;
+    }
+
+    function addRow() {
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Payment Entry';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    function closeModal() {
+      document.getElementById('modal').style.display = 'none';
+      editingId = null;
+      document.getElementById('modalTitle').textContent = 'Add Payment Entry';
+      ['f_date','f_party','f_ref_no','f_towards','f_amount','f_remarks']
+        .forEach(id => document.getElementById(id).value = '');
+      document.getElementById('f_mode').value = 'Cash';
+    }
+
+    function editRow(id) {
+      const r = data.find(x => x.id === id);
+      if (!r) return;
+      editingId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Payment Entry';
+      document.getElementById('f_date').value    = toInputDate(r.txn_date);
+      document.getElementById('f_party').value   = r.party   || '';
+      document.getElementById('f_ref_no').value  = r.ref_no  || '';
+      document.getElementById('f_towards').value = r.towards || '';
+      document.getElementById('f_amount').value  = r.amount  || '';
+      document.getElementById('f_mode').value    = r.mode    || 'Cash';
+      document.getElementById('f_remarks').value = r.remarks || '';
+      document.getElementById('modal').style.display = 'flex';
+    }
+
+    async function deleteRow(id) {
+      if (!confirm('Delete this payment entry? This cannot be undone.')) return;
+      const { error } = await db.from('wholesale_payments').delete().eq('id', id);
+      if (error) { alert('Delete failed: ' + error.message); return; }
+      data     = data.filter(x => x.id !== id);
+      filtered = filtered.filter(x => x.id !== id);
+      if ((currentPage - 1) * PAGE_SIZE >= filtered.length && currentPage > 1) currentPage--;
+      renderTable();
+    }
+
+    async function saveRow() {
+      const btn = document.querySelector('[onclick="saveRow()"]');
+      btn.textContent = 'Saving…'; btn.disabled = true;
+      const row = {
+        txn_date: fmtDate(document.getElementById('f_date').value),
+        party:    document.getElementById('f_party').value   || null,
+        ref_no:   document.getElementById('f_ref_no').value  || null,
+        towards:  document.getElementById('f_towards').value || null,
+        amount:   parseFloat(document.getElementById('f_amount').value) || 0,
+        mode:     document.getElementById('f_mode').value    || 'Cash',
+        remarks:  document.getElementById('f_remarks').value || null,
+      };
+
+      if (editingId) {
+        const { error } = await db.from('wholesale_payments').update(row).eq('id', editingId);
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Update failed: ' + error.message); return; }
+        const idx = data.findIndex(x => x.id === editingId);
+        if (idx !== -1) data[idx] = { ...data[idx], ...row };
+        filtered = [...data];
+      } else {
+        const { data: inserted, error } = await db.from('wholesale_payments').insert([row]).select();
+        btn.textContent = 'Save Entry'; btn.disabled = false;
+        if (error) { alert('Save failed: ' + error.message); return; }
+        data.unshift(inserted[0]);
+        filtered = [...data];
+        currentPage = 1;
+      }
+      renderTable();
+      closeModal();
+    }
+
+    function exportData() {
+      if (!filtered.length) { alert('No records to export.'); return; }
+      const rows = filtered.map((r, i) => ({
+        '#':          i + 1,
+        'Date':       r.txn_date || '',
+        'Party':      r.party    || '',
+        'Ref No.':    r.ref_no   || '',
+        'Towards':    r.towards  || '',
+        'Amount (Rs)':Number(r.amount) || 0,
+        'Mode':       r.mode     || '',
+        'Remarks':    r.remarks  || '',
+      }));
+      const ws = XLSX.utils.json_to_sheet(rows);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, 'Payments');
+      XLSX.writeFile(wb, 'Medwell_Wholesale_Payments_' + new Date().toISOString().slice(0,10) + '.xlsx');
+    }
+
+    function col(row, ...keys) {
+      for (const k of keys)
+        for (const rk of Object.keys(row))
+          if (rk.trim().toLowerCase() === k.toLowerCase() && row[rk] != null && row[rk] !== '') return row[rk];
+      return null;
+    }
+    function toStr(v) {
+      if (v == null || v === '') return null;
+      return String(v).trim() || null;
+    }
+    function toNum(v) {
+      if (v == null || v === '') return 0;
+      const n = parseFloat(String(v).replace(/[^\d.\-]/g, ''));
+      return isNaN(n) ? 0 : n;
+    }
+    function setProgress(done, total, msg) {
+      document.getElementById('progBar').style.width   = (total ? Math.round(done/total*100) : 0) + '%';
+      document.getElementById('progLabel').textContent = done + ' / ' + total + ' rows';
+      if (msg) document.getElementById('importMsg').textContent = msg;
+    }
+
+    function importFile(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      e.target.value = '';
+      const overlay = document.getElementById('importOverlay');
+      overlay.classList.add('show');
+      setProgress(0, 0, 'Reading file…');
+
+      const reader = new FileReader();
+      reader.onload = async function(evt) {
+        try {
+          const wb   = XLSX.read(evt.target.result, { type: 'array', cellDates: false });
+          const ws   = wb.Sheets[wb.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(ws, { defval: '', raw: false });
+
+          if (!rows.length) {
+            overlay.classList.remove('show');
+            alert('No data rows found in the file.');
+            return;
+          }
+
+          const mapped = rows.map(r => ({
+            txn_date: importDate(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
+            party:    toStr(col(r, 'Party', 'Vendor', 'Party / Vendor', 'Supplier')),
+            ref_no:   toStr(col(r, 'Ref No.', 'Ref No', 'Reference', 'Cheque No', 'UTR', 'ref_no')),
+            towards:  toStr(col(r, 'Towards', 'Invoice', 'Bill No', 'Against')),
+            amount:   toNum(col(r, 'Amount', 'Amount (Rs)', 'Amt', 'amount')),
+            mode:     toStr(col(r, 'Mode', 'Payment Mode', 'mode')) || 'Cash',
+            remarks:  toStr(col(r, 'Remarks', 'Notes', 'remarks')),
+          }));
+
+          const BATCH = 50;
+          let inserted = 0;
+          const total  = mapped.length;
+          setProgress(0, total, 'Uploading records…');
+
+          for (let i = 0; i < total; i += BATCH) {
+            const chunk = mapped.slice(i, i + BATCH);
+            const { error } = await db.from('wholesale_payments').insert(chunk);
+            if (error) {
+              overlay.classList.remove('show');
+              alert('Upload failed at row ' + (i + 1) + ':\n' + error.message);
+              return;
+            }
+            inserted += chunk.length;
+            setProgress(inserted, total, 'Uploading records…');
+          }
+
+          overlay.classList.remove('show');
+          alert('✅ ' + inserted + ' records imported successfully!');
+          loadData();
+        } catch (err) {
+          overlay.classList.remove('show');
+          alert('Failed to read file:\n' + err.message);
+        }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+
+    loadData();
+  </script>
+</body>
+</html>
