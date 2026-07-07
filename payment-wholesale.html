@@ -909,15 +909,15 @@
           status:         normalizeStatus(toStr(col(r, 'Status', 'status', 'Payment Status'))),
           mode:           normalizeMode(toStr(col(r, 'Payment Mode', 'Mode', 'mode', 'Payment Method'))),
           remarks:        toStr(col(r, 'Remarks', 'remarks', 'Notes', 'Note')),
-        })).filter(r => r.party || r.bill_no);
+        })).filter(r => Object.values(r).some(v => v !== null && v !== '' && v !== 0));
 
         if (!mapped.length) {
           overlay.classList.remove('show');
-          alert('No valid rows to import (Party Name or Bill No required).');
+          alert('No data rows found to import.');
           return;
         }
 
-        const BATCH = 50;
+        const BATCH = 500;
         let inserted = 0;
         const total  = mapped.length;
         setProgress(0, total, 'Uploading records…');
