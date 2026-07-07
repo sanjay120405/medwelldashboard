@@ -447,7 +447,7 @@
     const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
     let data = [], filtered = [], currentPage = 1, editingId = null;
-    const PAGE_SIZE = 100000;
+    const PAGE_SIZE = 50;
 
     async function loadData() {
       document.getElementById('purchaseBody').innerHTML =
