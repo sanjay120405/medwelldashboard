@@ -770,10 +770,51 @@
     document.getElementById('modal').style.display = 'flex';
   }
 
+  /* Distribute amount_received across bills in order and update wholesale_sales */
+  async function applyPaymentToSales(party, billNos, amtReceived) {
+    let remaining = amtReceived;
+    for (const bn of billNos) {
+      const { data: sr } = await db
+        .from('wholesale_sales')
+        .select('invoice_amt')
+        .eq('party', party)
+        .eq('bill_no', bn)
+        .maybeSingle();
+      if (!sr) continue;
+      const inv      = Number(sr.invoice_amt) || 0;
+      const paid     = Math.min(remaining, inv);
+      const balance  = inv - paid;
+      const payment  = balance <= 0 ? 'Paid' : paid > 0 ? 'Partial' : 'Pending';
+      await db.from('wholesale_sales').update({ paid_amt: paid, balance, payment })
+              .eq('party', party).eq('bill_no', bn);
+      remaining = Math.max(0, remaining - paid);
+    }
+  }
+
+  /* Reset bills back to unpaid when a payment is deleted or replaced */
+  async function resetSalesBills(party, billNoStr) {
+    if (!party || !billNoStr) return;
+    const bills = billNoStr.split(',').map(s => s.trim()).filter(Boolean);
+    for (const bn of bills) {
+      const { data: sr } = await db
+        .from('wholesale_sales')
+        .select('invoice_amt')
+        .eq('party', party)
+        .eq('bill_no', bn)
+        .maybeSingle();
+      if (!sr) continue;
+      const inv = Number(sr.invoice_amt) || 0;
+      await db.from('wholesale_sales').update({ paid_amt: 0, balance: inv, payment: 'Pending' })
+              .eq('party', party).eq('bill_no', bn);
+    }
+  }
+
   async function deleteRow(id) {
     if (!confirm('Delete this payment entry? This cannot be undone.')) return;
+    const payRow = data.find(x => x.id === id);
     const { error } = await db.from('wholesale_payments').delete().eq('id', id);
     if (error) { alert('Delete failed: ' + error.message); return; }
+    if (payRow) await resetSalesBills(payRow.party, payRow.bill_no);
     data     = data.filter(x => x.id !== id);
     filtered = filtered.filter(x => x.id !== id);
     if ((currentPage - 1) * PAGE_SIZE >= filtered.length && currentPage > 1) currentPage--;
@@ -787,21 +828,24 @@
     const { billNos, total, status } = getSelectedBillData();
     if (!billNos.length) { alert('Please select at least one bill.'); return; }
 
+    const amtReceived = parseFloat(document.getElementById('f_amount_received').value) || 0;
     const btn = document.getElementById('saveBtn');
     btn.textContent = 'Saving…'; btn.disabled = true;
 
     const row = {
-      txn_date:       fmtDate(document.getElementById('f_date').value),
-      party:          party,
-      bill_no:        billNos.join(', '),
-      invoice_amount: total,
+      txn_date:        fmtDate(document.getElementById('f_date').value),
+      party:           party,
+      bill_no:         billNos.join(', '),
+      invoice_amount:  total,
       status:          status,
       mode:            document.getElementById('f_mode').value || 'Medwell cub',
-      amount_received: parseFloat(document.getElementById('f_amount_received').value) || null,
+      amount_received: amtReceived || null,
       remarks:         document.getElementById('f_remarks').value || null,
     };
 
     if (editingId) {
+      const oldRow = data.find(x => x.id === editingId);
+      if (oldRow) await resetSalesBills(oldRow.party, oldRow.bill_no);
       const { error } = await db.from('wholesale_payments').update(row).eq('id', editingId);
       btn.textContent = 'Save Entry'; btn.disabled = false;
       if (error) { alert('Update failed: ' + error.message); return; }
@@ -816,6 +860,8 @@
       filtered = [...data];
       currentPage = 1;
     }
+
+    await applyPaymentToSales(party, billNos, amtReceived);
     renderTable();
     closeModal();
   }
