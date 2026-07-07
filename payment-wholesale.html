@@ -235,6 +235,10 @@
       </select>
       <button class="btn btn-outline" onclick="window.print()">&#x1F5A8; Print</button>
       <button class="btn btn-export" onclick="exportData()">&#x2B07; Export</button>
+      <label class="btn btn-outline" style="cursor:pointer;" title="Import Excel/CSV">
+        &#x2B06; Import
+        <input type="file" id="importFile" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFile(this)"/>
+      </label>
       <button class="btn btn-primary" onclick="addRow()">+ Add</button>
     </div>
   </div>
@@ -798,6 +802,84 @@
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Payments');
     XLSX.writeFile(wb, 'Medwell_Wholesale_Payments_' + new Date().toISOString().slice(0,10) + '.xlsx');
+  }
+
+  function importDate(v) {
+    if (!v) return null;
+    v = String(v).trim();
+    let m;
+    m = v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (m) return m[3].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[1];
+    m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);
+    if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-' + m[3];
+    m = v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);
+    if (m) return m[1].padStart(2,'0') + '-' + m[2].padStart(2,'0') + '-20' + m[3];
+    return v || null;
+  }
+
+  function col(row, ...names) {
+    for (const n of names) {
+      for (const k of Object.keys(row)) {
+        if (k.trim().toLowerCase() === n.toLowerCase()) return row[k];
+      }
+    }
+    return undefined;
+  }
+
+  function normalizeMode(v) {
+    if (!v) return 'Medwell cub';
+    const s = String(v).trim().toLowerCase();
+    if (s.includes('medwell') || s.includes('cub')) return 'Medwell cub';
+    if (s === 'cash') return 'Cash';
+    return 'Others';
+  }
+
+  function normalizeStatus(v) {
+    if (!v) return 'Pending';
+    const s = String(v).trim().toLowerCase();
+    if (s === 'paid' || s === 'full') return 'Paid';
+    if (s === 'partial') return 'Partial';
+    return 'Pending';
+  }
+
+  async function importFile(input) {
+    const file = input.files[0];
+    if (!file) return;
+    input.value = '';
+    const reader = new FileReader();
+    reader.onload = async e => {
+      try {
+        const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: false, raw: false });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, { defval: '' });
+        if (!rows.length) { alert('No data found in file.'); return; }
+
+        const toInsert = rows.map(r => ({
+          txn_date:       importDate(col(r,'date','txn_date','Date','Txn Date')),
+          party:          String(col(r,'party','party name','Party','Party Name') || '').trim() || null,
+          bill_no:        String(col(r,'bill no','bill_no','Bill No','BillNo') || '').trim() || null,
+          invoice_amount: Number(col(r,'invoice amount','invoice_amount','Invoice Amount','Amount') || 0),
+          status:         normalizeStatus(col(r,'status','Status')),
+          mode:           normalizeMode(col(r,'payment mode','mode','Mode','Payment Mode')),
+          remarks:        String(col(r,'remarks','Remarks') || '').trim() || null,
+        })).filter(r => r.party || r.bill_no);
+
+        if (!toInsert.length) { alert('No valid rows to import.'); return; }
+
+        const BATCH = 500;
+        let inserted = 0;
+        for (let i = 0; i < toInsert.length; i += BATCH) {
+          const { error } = await db.from('wholesale_payments').insert(toInsert.slice(i, i + BATCH));
+          if (error) { alert('Import error: ' + error.message); return; }
+          inserted += Math.min(BATCH, toInsert.length - i);
+        }
+        alert(`Import successful: ${inserted} rows added.`);
+        loadData();
+      } catch(err) {
+        alert('Failed to read file: ' + err.message);
+      }
+    };
+    reader.readAsBinaryString(file);
   }
 
   /* ─── Init ─── */
