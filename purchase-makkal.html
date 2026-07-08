@@ -482,9 +482,10 @@
       return sign + '₹' + Math.abs(Number(n)).toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
     }
 
+    function esc(s){if(s==null||s==='')return'—';const v=String(s).trim();if(!v)return'—';return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
     function statusBadge(s) {
       const cls = s === 'Paid' ? 'paid' : s === 'Partial' ? 'partial' : 'pending';
-      return `<span class="status-badge ${cls}">${s || 'Pending'}</span>`;
+      return `<span class="status-badge ${cls}">${esc(s)||'Pending'}</span>`;
     }
 
     function renderTable() {
@@ -499,9 +500,9 @@
         tbody.innerHTML = slice.map((r, i) => `
           <tr>
             <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
-            <td class="td-date">${r.txn_date || '—'}</td>
-            <td class="td-party">${r.party || '—'}</td>
-            <td class="td-vch">${r.vch || '—'}</td>
+            <td class="td-date">${esc(r.txn_date)}</td>
+            <td class="td-party">${esc(r.party)}</td>
+            <td class="td-vch">${esc(r.vch)}</td>
             <td class="td-amt right">${fmt(r.taxable)}</td>
             <td class="td-tax right">${fmt(r.cgst)}</td>
             <td class="td-tax right">${fmt(r.sgst)}</td>

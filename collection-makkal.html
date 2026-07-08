@@ -305,7 +305,8 @@
   }
 
   function fmt(n){if(!n&&n!==0)return'—';const v=Number(n);if(v===0)return'—';return'₹'+v.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
-  function statusBadge(s){const cls=s==='Paid'?'s-paid':s==='Partial'?'s-partial':'s-pending';return`<span class="status-badge ${cls}">${s||'Pending'}</span>`;}
+  function esc(s){if(s==null||s==='')return'—';const v=String(s).trim();if(!v)return'—';return v.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+  function statusBadge(s){const cls=s==='Paid'?'s-paid':s==='Partial'?'s-partial':'s-pending';return`<span class="status-badge ${cls}">${esc(s)||'Pending'}</span>`;}
 
   function renderTable(){
     const start=(currentPage-1)*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,filtered.length);
@@ -314,15 +315,15 @@
     else{tbody.innerHTML=filtered.slice(start,end).map((r,i)=>`
       <tr>
         <td style="color:#9CA3AF;font-size:12px">${start+i+1}</td>
-        <td style="font-weight:600;color:#111827">${r.party||'—'}</td>
-        <td style="color:#6B7280;font-size:12px;white-space:nowrap">${r.txn_date||'—'}</td>
-        <td style="font-family:monospace;font-size:12px;color:#EA580C;font-weight:600;max-width:180px;word-break:break-all">${r.bill_no||'—'}</td>
+        <td style="font-weight:600;color:#111827">${esc(r.party)}</td>
+        <td style="color:#6B7280;font-size:12px;white-space:nowrap">${esc(r.txn_date)}</td>
+        <td style="font-family:monospace;font-size:12px;color:#EA580C;font-weight:600;max-width:180px;word-break:break-all">${esc(r.bill_no)}</td>
         <td class="right" style="font-weight:700">${fmt(r.invoice_amount)}</td>
         <td class="right" style="font-weight:700;color:#EA580C">${fmt(r.amount_received)}</td>
         <td class="right" style="font-weight:700;color:#DC2626">${fmt((Number(r.invoice_amount)||0)-(Number(r.amount_received)||0))}</td>
         <td>${statusBadge(r.status)}</td>
-        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#F3F4F6;color:#374151">${r.mode||'—'}</span></td>
-        <td style="font-size:12px;color:#6B7280">${r.remarks||'—'}</td>
+        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#F3F4F6;color:#374151">${esc(r.mode)}</span></td>
+        <td style="font-size:12px;color:#6B7280">${esc(r.remarks)}</td>
         <td><div class="action-cell">
           <button class="btn-edit" onclick="editRow('${r.id}')">&#x270F; Edit</button>
           <button class="btn-del" onclick="deleteRow('${r.id}')">&#x1F5D1; Delete</button>
@@ -382,12 +383,14 @@
     const matches=q?allParties.filter(p=>p.toLowerCase().includes(q)).slice(0,10):allParties.slice(0,10);
     if(!matches.length){box.style.display='none';return;}
     box.innerHTML=matches.map(p=>{
-      const hi=q?p.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):p;
-      return`<div class="suggestion-item" onmousedown="selectParty('${p.replace(/'/g,"\\'")}')"> ${hi} </div>`;
+      const ep=esc(p);
+      const hi=q?ep.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):ep;
+      return`<div class="suggestion-item" data-name="${ep}" onmousedown="selectPartyFromEl(this)"> ${hi} </div>`;
     }).join('');
     box.style.display='block';
   }
 
+  function selectPartyFromEl(el){selectParty(el.dataset.name);}
   async function selectParty(name){
     document.getElementById('party_search').value='';
     document.getElementById('party_suggestions').style.display='none';
@@ -417,7 +420,7 @@
       const amt=Number(b.invoice)||0;
       return`<label class="bill-row${checked?' checked':''}" id="bill_row_${i}">
         <input type="checkbox" ${checked} onchange="onBillCheck(${i},this.checked)" data-idx="${i}"/>
-        <span class="bill-no-text">${b.vch}</span>
+        <span class="bill-no-text">${esc(b.vch)}</span>
         <span class="bill-amt-text">₹${amt.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
       </label>`;
     }).join('');
