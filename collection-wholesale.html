@@ -271,6 +271,7 @@
             <th>Bill No</th>
             <th class="right">Invoice Amount (&#x20B9;)</th>
             <th class="right">Amount Received (&#x20B9;)</th>
+            <th class="right">Balance (&#x20B9;)</th>
             <th>Status</th>
             <th>Payment Mode</th>
             <th>Remarks</th>
@@ -385,7 +386,7 @@
   /* ─── Load collection records ─── */
   async function loadData() {
     document.getElementById('collectionBody').innerHTML =
-      '<tr class="empty-row"><td colspan="10">Loading&#x2026;</td></tr>';
+      '<tr class="empty-row"><td colspan="11">Loading&#x2026;</td></tr>';
     const FETCH_SIZE = 1000;
     let allRows = [], from = 0;
     while (true) {
@@ -396,7 +397,7 @@
         .range(from, from + FETCH_SIZE - 1);
       if (error) {
         document.getElementById('collectionBody').innerHTML =
-          `<tr class="empty-row"><td colspan="10" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+          `<tr class="empty-row"><td colspan="11" style="color:#EF4444">Error: ${error.message}</td></tr>`;
         return;
       }
       if (!rows || rows.length === 0) break;
@@ -457,7 +458,7 @@
     const start = (currentPage-1)*PAGE_SIZE, end = Math.min(start+PAGE_SIZE, filtered.length);
     const tbody = document.getElementById('collectionBody');
     if (!filtered.slice(start,end).length) {
-      tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No records found</td></tr>';
+      tbody.innerHTML = '<tr class="empty-row"><td colspan="11">No records found</td></tr>';
     } else {
       tbody.innerHTML = filtered.slice(start,end).map((r,i) => `
         <tr>
@@ -467,6 +468,7 @@
           <td style="font-family:monospace;font-size:12px;color:#2563EB;font-weight:600;max-width:200px;word-break:break-all">${r.bill_no||'—'}</td>
           <td class="right" style="font-weight:700">${fmt(r.invoice_amount)}</td>
           <td class="right" style="font-weight:700;color:#059669">${fmt(r.amount_received)}</td>
+          <td class="right" style="font-weight:700;color:#DC2626">${fmt((Number(r.invoice_amount)||0)-(Number(r.amount_received)||0))}</td>
           <td>${statusBadge(r.status)}</td>
           <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#F3F4F6;color:#374151">${r.mode||'—'}</span></td>
           <td style="font-size:12px;color:#6B7280">${r.remarks||'—'}</td>
@@ -804,6 +806,7 @@
       'Bill No':         r.bill_no        ||'',
       'Invoice Amount':  Number(r.invoice_amount)  ||0,
       'Amount Received': Number(r.amount_received) ||0,
+      'Balance':         (Number(r.invoice_amount)||0)-(Number(r.amount_received)||0),
       'Status':          r.status         ||'',
       'Payment Mode':    r.mode           ||'',
       'Remarks':         r.remarks        ||'',
