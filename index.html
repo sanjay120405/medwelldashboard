@@ -40,6 +40,9 @@
     .analytics-hdr h2{font-size:18px;font-weight:700;color:#111827}
     .analytics-hdr p{font-size:12px;color:#9CA3AF;margin-top:2px}
     .year-badge{font-size:12px;font-weight:600;color:#6B7280;background:#F3F4F6;padding:4px 12px;border-radius:20px}
+    .filter-wrap{display:flex;align-items:center;gap:8px}
+    .filter-sel{font-size:12px;font-weight:600;color:#374151;background:#fff;border:1.5px solid #E5E7EB;border-radius:8px;padding:6px 12px;cursor:pointer;outline:none}
+    .filter-sel:focus{border-color:#2563EB}
 
     /* Stat cards row */
     .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
@@ -131,7 +134,21 @@
       <h2>Business Overview</h2>
       <p>Synced from all units — Wholesale, Retail, Makkal Marunthagam &amp; Lab</p>
     </div>
-    <span class="year-badge" id="yearBadge">All Time</span>
+    <div class="filter-wrap">
+      <select id="filterMonth" class="filter-sel" onchange="applyFilter()">
+        <option value="">All Months</option>
+        <option value="0">January</option><option value="1">February</option><option value="2">March</option>
+        <option value="3">April</option><option value="4">May</option><option value="5">June</option>
+        <option value="6">July</option><option value="7">August</option><option value="8">September</option>
+        <option value="9">October</option><option value="10">November</option><option value="11">December</option>
+      </select>
+      <select id="filterYear" class="filter-sel" onchange="applyFilter()">
+        <option value="">All Years</option>
+        <option value="2024">2024</option><option value="2025">2025</option>
+        <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+      </select>
+      <span class="year-badge" id="yearBadge">All Time</span>
+    </div>
   </div>
 
   <!-- Stat cards -->
@@ -229,14 +246,11 @@
   const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const CYR = new Date().getFullYear();
 
-  let monthlyData = {
-    purchase:   new Array(12).fill(0),
-    sales:      new Array(12).fill(0),
-    collection: new Array(12).fill(0),
-    payment:    new Array(12).fill(0),
-  };
+  // Global raw data (normalised to {dt, amt})
+  let rawData = { purchase:[], sales:[], collection:[], payment:[] };
 
   function parseDt(d) {
     if (!d) return null;
@@ -255,9 +269,7 @@
     while (true) {
       const { data, error } = await db.from(table).select(fields).range(from, from + SIZE - 1);
       if (error || !data || !data.length) break;
-      all = all.concat(data);
-      if (data.length < SIZE) break;
-      from += SIZE;
+      all = all.concat(data); if (data.length < SIZE) break; from += SIZE;
     }
     return all;
   }
@@ -275,140 +287,140 @@
     return (v/100000).toFixed(v % 100000 === 0 ? 0 : 1) + 'L';
   }
 
-  // ── Init charts ──
+  // ── Charts ──
   const donutChart = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
     data: {
       labels: ['Purchase','Sales','Collection','Payment'],
-      datasets: [{
-        data: [1,1,1,1],
-        backgroundColor: ['#2563EB','#10B981','#F59E0B','#8B5CF6'],
-        borderWidth: 2,
-        borderColor: '#fff',
-        hoverOffset: 6
-      }]
+      datasets: [{ data:[1,1,1,1], backgroundColor:['#2563EB','#10B981','#F59E0B','#8B5CF6'], borderWidth:2, borderColor:'#fff', hoverOffset:6 }]
     },
     options: {
       cutout: '65%',
-      plugins: {
-        legend: { display: false },
-        tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + fmtAmt(ctx.raw) } }
-      },
-      responsive: true, maintainAspectRatio: true
+      plugins: { legend:{ display:false }, tooltip:{ callbacks:{ label: ctx => ' '+ctx.label+': '+fmtAmt(ctx.raw) } } },
+      responsive:true, maintainAspectRatio:true
     }
   });
 
-  const colorMap = { sales: '#10B981', purchase: '#2563EB', collection: '#F59E0B', payment: '#8B5CF6' };
+  const colorMap = { sales:'#10B981', purchase:'#2563EB', collection:'#F59E0B', payment:'#8B5CF6' };
 
   const barChart = new Chart(document.getElementById('barChart'), {
     type: 'bar',
     data: {
       labels: MONTHS,
-      datasets: [{
-        label: 'Sales',
-        data: new Array(12).fill(0),
-        backgroundColor: '#10B981',
-        borderRadius: 5,
-        borderSkipped: false,
-        barPercentage: 0.6
-      }]
+      datasets: [{ label:'Sales', data:new Array(12).fill(0), backgroundColor:'#10B981', borderRadius:5, borderSkipped:false, barPercentage:0.6 }]
     },
     options: {
-      plugins: { legend: { display: false } },
+      plugins: { legend:{ display:false } },
       scales: {
-        y: {
-          beginAtZero: true,
-          grid: { color: '#F3F4F6' },
-          ticks: {
-            stepSize: 100000,
-            font: { size: 10 },
-            color: '#9CA3AF',
-            callback: tickFmt
-          }
-        },
-        x: {
-          grid: { display: false },
-          ticks: { font: { size: 11 }, color: '#6B7280' }
-        }
+        y: { beginAtZero:true, grid:{ color:'#F3F4F6' }, ticks:{ stepSize:100000, font:{ size:10 }, color:'#9CA3AF', callback:tickFmt } },
+        x: { grid:{ display:false }, ticks:{ font:{ size:11 }, color:'#6B7280' } }
       },
-      responsive: true,
-      maintainAspectRatio: true
+      responsive:true, maintainAspectRatio:true
     }
   });
 
-  function switchChart(metric) {
-    barChart.data.datasets[0].label = metric.charAt(0).toUpperCase() + metric.slice(1);
-    barChart.data.datasets[0].data = [...monthlyData[metric]];
+  // ── Apply filter — called on load and on dropdown change ──
+  function applyFilter() {
+    const yrVal = document.getElementById('filterYear').value;
+    const moVal = document.getElementById('filterMonth').value;
+    const yr  = yrVal  !== '' ? parseInt(yrVal)  : null;
+    const mo  = moVal  !== '' ? parseInt(moVal)  : null;
+
+    // Filter raw data
+    function filterCat(rows) {
+      return rows.filter(r => {
+        if (!r.dt) return false;
+        if (yr !== null && r.dt.getFullYear() !== yr) return false;
+        if (mo !== null && r.dt.getMonth()    !== mo) return false;
+        return true;
+      });
+    }
+    const fP = filterCat(rawData.purchase);
+    const fS = filterCat(rawData.sales);
+    const fC = filterCat(rawData.collection);
+    const fPa= filterCat(rawData.payment);
+
+    const totP  = fP.reduce ((s,r)=>s+r.amt,0);
+    const totS  = fS.reduce ((s,r)=>s+r.amt,0);
+    const totC  = fC.reduce ((s,r)=>s+r.amt,0);
+    const totPa = fPa.reduce((s,r)=>s+r.amt,0);
+
+    // Stat cards
+    document.getElementById('stat-purchase').textContent   = fmtAmt(totP);
+    document.getElementById('stat-sales').textContent      = fmtAmt(totS);
+    document.getElementById('stat-collection').textContent = fmtAmt(totC);
+    document.getElementById('stat-payment').textContent    = fmtAmt(totPa);
+
+    // Donut
+    donutChart.data.datasets[0].data = [totP, totS, totC, totPa];
+    donutChart.update();
+    document.getElementById('leg-purchase').textContent   = fmtAmt(totP);
+    document.getElementById('leg-sales').textContent      = fmtAmt(totS);
+    document.getElementById('leg-collection').textContent = fmtAmt(totC);
+    document.getElementById('leg-payment').textContent    = fmtAmt(totPa);
+
+    // Year badge
+    let badge = 'All Time';
+    if (yr && mo !== null) badge = MONTH_FULL[mo] + ' ' + yr;
+    else if (yr)           badge = String(yr);
+    else if (mo !== null)  badge = MONTH_FULL[mo];
+    document.getElementById('yearBadge').textContent = badge;
+
+    // Bar chart
+    const metric = document.getElementById('chartMetric').value;
+    const fMetric = { purchase:fP, sales:fS, collection:fC, payment:fPa }[metric];
+
+    if (mo !== null && yr !== null) {
+      // Daily view for selected month+year
+      const days = new Date(yr, mo+1, 0).getDate();
+      const labels = Array.from({length:days}, (_,i) => i+1);
+      const values = new Array(days).fill(0);
+      fMetric.forEach(r => { values[r.dt.getDate()-1] += r.amt; });
+      barChart.data.labels = labels;
+      barChart.data.datasets[0].data = values;
+      document.getElementById('chartYear').textContent = MONTH_FULL[mo]+' '+yr;
+    } else {
+      // Monthly view for selected year (or current year if no year selected)
+      const displayYr = yr || CYR;
+      const values = new Array(12).fill(0);
+      const source = yr !== null ? fMetric : rawData[metric].filter(r => r.dt && r.dt.getFullYear() === displayYr);
+      source.forEach(r => { values[r.dt.getMonth()] += r.amt; });
+      barChart.data.labels = MONTHS;
+      barChart.data.datasets[0].data = values;
+      document.getElementById('chartYear').textContent = displayYr;
+    }
+
+    barChart.data.datasets[0].label = metric.charAt(0).toUpperCase()+metric.slice(1);
     barChart.data.datasets[0].backgroundColor = colorMap[metric];
     barChart.update();
   }
 
+  function switchChart(metric) { applyFilter(); }
+
   async function loadDashboard() {
-    const [
-      wPurchases, mPurchases,
-      wSales, rSales, mSales,
-      wCollection, mCollection, labCol,
-      wPayments, mPayments
-    ] = await Promise.all([
+    const [wPurch, mPurch, wSales, rSales, mSales, wCol, mCol, labCol, wPay, mPay] = await Promise.all([
       fetchAll('wholesale_purchases', 'txn_date,invoice'),
-      fetchAll('makkal_purchases',   'txn_date,invoice'),
-      fetchAll('wholesale_sales',    'txn_date,invoice_amt'),
-      fetchAll('retail_sales',       'txn_date,amount'),
-      fetchAll('makkal_sales',       'txn_date,amount'),
+      fetchAll('makkal_purchases',    'txn_date,invoice'),
+      fetchAll('wholesale_sales',     'txn_date,invoice_amt'),
+      fetchAll('retail_sales',        'txn_date,amount'),
+      fetchAll('makkal_sales',        'txn_date,amount'),
       fetchAll('wholesale_collection','txn_date,amount_received'),
-      fetchAll('makkal_collection',  'txn_date,amount_received'),
-      fetchAll('lab_collection',     'txn_date,total_amount'),
-      fetchAll('wholesale_payments', 'txn_date,amount_received'),
-      fetchAll('makkal_payments',    'txn_date,amount_received'),
+      fetchAll('makkal_collection',   'txn_date,amount_received'),
+      fetchAll('lab_collection',      'txn_date,total_amount'),
+      fetchAll('wholesale_payments',  'txn_date,amount_received'),
+      fetchAll('makkal_payments',     'txn_date,amount_received'),
     ]);
 
-    // ── Monthly breakdown (current year) ──
-    monthlyData = { purchase: new Array(12).fill(0), sales: new Array(12).fill(0), collection: new Array(12).fill(0), payment: new Array(12).fill(0) };
+    function norm(rows, field) { return rows.map(r => ({dt:parseDt(r.txn_date), amt:+(r[field]||0)})).filter(r=>r.dt); }
 
-    function addMonthly(rows, amtField, cat) {
-      rows.forEach(r => {
-        const dt = parseDt(r.txn_date);
-        if (!dt || dt.getFullYear() !== CYR) return;
-        monthlyData[cat][dt.getMonth()] += +(r[amtField] || 0);
-      });
-    }
+    rawData = {
+      purchase:   [...norm(wPurch,'invoice'),       ...norm(mPurch,'invoice')],
+      sales:      [...norm(wSales,'invoice_amt'),   ...norm(rSales,'amount'),  ...norm(mSales,'amount')],
+      collection: [...norm(wCol,'amount_received'), ...norm(mCol,'amount_received'), ...norm(labCol,'total_amount')],
+      payment:    [...norm(wPay,'amount_received'), ...norm(mPay,'amount_received')],
+    };
 
-    addMonthly(wPurchases, 'invoice',        'purchase');
-    addMonthly(mPurchases, 'invoice',        'purchase');
-    addMonthly(wSales,     'invoice_amt',    'sales');
-    addMonthly(rSales,     'amount',         'sales');
-    addMonthly(mSales,     'amount',         'sales');
-    addMonthly(wCollection,'amount_received','collection');
-    addMonthly(mCollection,'amount_received','collection');
-    addMonthly(labCol,     'total_amount',   'collection');
-    addMonthly(wPayments,  'amount_received','payment');
-    addMonthly(mPayments,  'amount_received','payment');
-
-    // ── All-time totals for stat cards & donut ──
-    function sum(rows, field) { return rows.reduce((s,r) => s + +(r[field]||0), 0); }
-
-    const totPurchase   = sum(wPurchases,'invoice')        + sum(mPurchases,'invoice');
-    const totSales      = sum(wSales,'invoice_amt')        + sum(rSales,'amount')         + sum(mSales,'amount');
-    const totCollection = sum(wCollection,'amount_received')+ sum(mCollection,'amount_received') + sum(labCol,'total_amount');
-    const totPayment    = sum(wPayments,'amount_received') + sum(mPayments,'amount_received');
-
-    // ── Stat cards ──
-    document.getElementById('stat-purchase').textContent   = fmtAmt(totPurchase);
-    document.getElementById('stat-sales').textContent      = fmtAmt(totSales);
-    document.getElementById('stat-collection').textContent = fmtAmt(totCollection);
-    document.getElementById('stat-payment').textContent    = fmtAmt(totPayment);
-
-    // ── Donut ──
-    donutChart.data.datasets[0].data = [totPurchase, totSales, totCollection, totPayment];
-    donutChart.update();
-    document.getElementById('leg-purchase').textContent   = fmtAmt(totPurchase);
-    document.getElementById('leg-sales').textContent      = fmtAmt(totSales);
-    document.getElementById('leg-collection').textContent = fmtAmt(totCollection);
-    document.getElementById('leg-payment').textContent    = fmtAmt(totPayment);
-
-    // ── Bar chart (default: sales, current year) ──
-    document.getElementById('chartYear').textContent = CYR;
-    switchChart(document.getElementById('chartMetric').value);
+    applyFilter();
   }
 
   loadDashboard();
