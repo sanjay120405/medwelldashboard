@@ -8,237 +8,89 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: #F1F5F9;
-      color: #111827;
-      min-height: 100vh;
-    }
+    body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:#F1F5F9;color:#111827;min-height:100vh}
 
     /* ── HERO ── */
-    .hero {
-      background: linear-gradient(150deg,#EFF6FF 0%,#DBEAFE 50%,#E0F2FE 100%);
-      padding: 36px 32px 28px;
-    }
-
-    .hero-title {
-      font-size: 30px; font-weight: 800; color: #111827;
-      letter-spacing: -0.6px; margin-bottom: 6px;
-    }
-
-    .hero-sub {
-      font-size: 14px; color: #6B7280; margin-bottom: 26px;
-    }
+    .hero{background:linear-gradient(150deg,#EFF6FF 0%,#DBEAFE 50%,#E0F2FE 100%);padding:36px 32px 28px}
+    .hero-title{font-size:30px;font-weight:800;color:#111827;letter-spacing:-0.6px;margin-bottom:6px}
+    .hero-sub{font-size:14px;color:#6B7280;margin-bottom:26px}
 
     /* ── BIZ CARDS ── */
-    .biz-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 16px;
-    }
-
-    .biz-card {
-      border-radius: 18px;
-      padding: 22px 20px 16px;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      text-decoration: none;
-      display: block;
-      min-height: 170px;
-      transition: transform .2s, box-shadow .2s;
-      border: 1.5px solid transparent;
-    }
-
-    .biz-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.12);
-    }
-
-    .biz-card.blue   { background: #DBEAFE; border-color: #BFDBFE; }
-    .biz-card.green  { background: #D1FAE5; border-color: #A7F3D0; }
-    .biz-card.orange { background: #FEF3C7; border-color: #FDE68A; }
-    .biz-card.purple { background: #EDE9FE; border-color: #DDD6FE; }
-
-    .biz-icon {
-      width: 46px; height: 46px; border-radius: 13px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 22px; margin-bottom: 14px;
-    }
-
-    .blue   .biz-icon { background: #2563EB; }
-    .green  .biz-icon { background: #10B981; }
-    .orange .biz-icon { background: #F59E0B; }
-    .purple .biz-icon { background: #8B5CF6; }
-
-    .biz-name {
-      font-size: 14px; font-weight: 700; color: #111827; margin-bottom: 6px;
-    }
-
-    .biz-desc {
-      font-size: 12px; color: #6B7280; line-height: 1.5; max-width: 130px;
-    }
-
-    .biz-illus {
-      position: absolute;
-      right: 10px; bottom: 10px;
-      font-size: 70px; line-height: 1;
-      opacity: 0.22;
-      pointer-events: none;
-    }
-
-    .biz-arrow {
-      position: absolute;
-      bottom: 16px; right: 16px;
-      width: 30px; height: 30px; border-radius: 50%;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 15px; font-weight: 700;
-      opacity: 0; transition: opacity .2s;
-    }
-
-    .blue   .biz-arrow { background: #2563EB; color: white; }
-    .green  .biz-arrow { background: #10B981; color: white; }
-    .orange .biz-arrow { background: #F59E0B; color: white; }
-    .purple .biz-arrow { background: #8B5CF6; color: white; }
-
-    .biz-card:hover .biz-arrow { opacity: 1; }
-    .biz-card:hover .biz-illus { opacity: 0.35; }
+    .biz-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+    .biz-card{border-radius:18px;padding:22px 20px 16px;cursor:pointer;position:relative;overflow:hidden;text-decoration:none;display:block;min-height:170px;transition:transform .2s,box-shadow .2s;border:1.5px solid transparent}
+    .biz-card:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,0.12)}
+    .biz-card.blue{background:#DBEAFE;border-color:#BFDBFE}
+    .biz-card.green{background:#D1FAE5;border-color:#A7F3D0}
+    .biz-card.orange{background:#FEF3C7;border-color:#FDE68A}
+    .biz-card.purple{background:#EDE9FE;border-color:#DDD6FE}
+    .biz-icon{width:46px;height:46px;border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+    .blue .biz-icon{background:#2563EB}.green .biz-icon{background:#10B981}
+    .orange .biz-icon{background:#F59E0B}.purple .biz-icon{background:#8B5CF6}
+    .biz-name{font-size:14px;font-weight:700;color:#111827;margin-bottom:6px}
+    .biz-desc{font-size:12px;color:#6B7280;line-height:1.5;max-width:130px}
+    .biz-illus{position:absolute;right:10px;bottom:10px;font-size:70px;line-height:1;opacity:.22;pointer-events:none}
+    .biz-arrow{position:absolute;bottom:16px;right:16px;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;opacity:0;transition:opacity .2s}
+    .blue .biz-arrow{background:#2563EB;color:white}.green .biz-arrow{background:#10B981;color:white}
+    .orange .biz-arrow{background:#F59E0B;color:white}.purple .biz-arrow{background:#8B5CF6;color:white}
+    .biz-card:hover .biz-arrow{opacity:1}.biz-card:hover .biz-illus{opacity:.35}
 
     /* ── ANALYTICS ── */
-    .analytics {
-      padding: 28px 32px 36px;
+    .analytics{padding:28px 32px 36px}
+    .analytics-hdr{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:20px}
+    .analytics-hdr h2{font-size:18px;font-weight:700;color:#111827}
+    .analytics-hdr p{font-size:12px;color:#9CA3AF;margin-top:2px}
+    .year-badge{font-size:12px;font-weight:600;color:#6B7280;background:#F3F4F6;padding:4px 12px;border-radius:20px}
+
+    /* Stat cards row */
+    .stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+    .stat-card{background:white;border-radius:14px;padding:20px 18px;box-shadow:0 1px 6px rgba(0,0,0,0.05);border-left:4px solid transparent}
+    .stat-card.s-blue{border-left-color:#2563EB}.stat-card.s-green{border-left-color:#10B981}
+    .stat-card.s-orange{border-left-color:#F59E0B}.stat-card.s-purple{border-left-color:#8B5CF6}
+    .stat-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px}
+    .stat-label{font-size:12px;color:#9CA3AF;font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+    .stat-badge{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .stat-value{font-size:22px;font-weight:800;color:#111827;letter-spacing:-0.5px;margin-bottom:4px}
+    .stat-sub{font-size:11px;color:#9CA3AF}
+
+    /* Chart panels */
+    .charts-row{display:grid;grid-template-columns:340px 1fr;gap:18px;align-items:start}
+    .panel{background:white;border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,0.05)}
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .panel-title{font-size:14px;font-weight:700;color:#111827}
+    .panel-sub{font-size:11px;color:#9CA3AF;margin-bottom:14px}
+
+    /* Donut */
+    .donut-wrap{width:160px;height:160px;margin:0 auto 14px}
+    .legend{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+    .leg-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;font-weight:500}
+    .leg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
+    .leg-val{margin-left:auto;font-weight:700;color:#111827;font-size:12px}
+
+    /* Bar chart */
+    .bar-panel{background:white;border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,0.05)}
+    .bar-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .metric-select{font-size:12px;color:#374151;background:#F9FAFB;border:1.5px solid #E5E7EB;border-radius:8px;padding:5px 12px;cursor:pointer;outline:none;font-weight:600}
+
+    @media(max-width:1100px){
+      .biz-grid{grid-template-columns:repeat(2,1fr)}
+      .stat-row{grid-template-columns:repeat(2,1fr)}
+      .charts-row{grid-template-columns:1fr}
     }
-
-    .analytics-hdr { margin-bottom: 20px; }
-
-    .analytics-hdr h2 {
-      font-size: 18px; font-weight: 700; color: #111827;
-    }
-
-    .analytics-hdr p {
-      font-size: 12px; color: #9CA3AF; margin-top: 2px;
-    }
-
-    .analytics-grid {
-      display: grid;
-      grid-template-columns: 1fr 1.15fr 1.5fr;
-      gap: 18px;
-      align-items: start;
-    }
-
-    /* stat cards */
-    .stat-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 14px;
-    }
-
-    .stat-card {
-      background: white; border-radius: 14px; padding: 18px 16px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-    }
-
-    .stat-top {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      margin-bottom: 10px;
-    }
-
-    .stat-label {
-      font-size: 12px; color: #9CA3AF; font-weight: 500;
-    }
-
-    .stat-badge {
-      width: 30px; height: 30px; border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 14px; flex-shrink: 0;
-    }
-
-    .stat-value {
-      font-size: 20px; font-weight: 800; color: #111827;
-      letter-spacing: -0.5px; margin-bottom: 6px;
-    }
-
-    .stat-trend {
-      font-size: 11px; color: #9CA3AF;
-      display: flex; align-items: center; gap: 4px;
-    }
-
-    .up { color: #10B981; }
-
-    /* donut card */
-    .panel {
-      background: white; border-radius: 14px; padding: 9px 11px 5px;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.05);
-    }
-
-    .panel-hdr {
-      display: flex; align-items: center; justify-content: space-between;
-      margin-bottom: 4px;
-    }
-
-    .panel-title { font-size: 14px; font-weight: 700; color: #111827; }
-    .panel-sub   { font-size: 11px; color: #9CA3AF; margin-bottom: 10px; }
-    .dots-menu   { font-size: 18px; color: #D1D5DB; cursor: pointer; }
-
-    .donut-row {
-      display: flex; align-items: center; gap: 28px;
-    }
-
-    .donut-wrap { width: 200px; height: 200px; flex-shrink: 0; }
-
-    .legend { flex: 1; }
-
-    .leg-item {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 12px; color: #374151; margin-bottom: 7px; font-weight: 500;
-    }
-
-    .leg-dot {
-      width: 13px; height: 13px; border-radius: 50%; flex-shrink: 0;
-    }
-
-    /* right col */
-    .right-col { display: flex; flex-direction: column; gap: 16px; }
-
-    .line-card { background: white; border-radius: 14px; padding: 16px 18px; box-shadow: 0 1px 6px rgba(0,0,0,0.05); }
-
-    .line-hdr {
-      display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;
-    }
-
-    .line-select {
-      font-size: 11px; color: #6B7280;
-      background: #F9FAFB; border: 1px solid #E5E7EB;
-      border-radius: 8px; padding: 4px 10px; cursor: pointer; outline: none;
-    }
-
-
-    @media (max-width: 1100px) {
-      .biz-grid { grid-template-columns: repeat(2, 1fr); }
-      .analytics-grid { grid-template-columns: 1fr 1fr; }
-      .right-col { grid-column: 1 / -1; }
-    }
-
-    @media (max-width: 680px) {
-      .biz-grid { grid-template-columns: 1fr 1fr; }
-      .analytics-grid { grid-template-columns: 1fr; }
-      nav { padding: 0 16px; gap: 14px; }
-      .hero { padding: 24px 16px 20px; }
-      .analytics { padding: 20px 16px; }
-      .search-wrap { width: 140px; }
+    @media(max-width:680px){
+      .biz-grid{grid-template-columns:1fr 1fr}
+      .stat-row{grid-template-columns:repeat(2,1fr)}
+      .hero{padding:24px 16px 20px}
+      .analytics{padding:20px 16px}
     }
   </style>
 </head>
 <body>
 
-
 <!-- ══ HERO ══ -->
 <div class="hero">
   <h1 class="hero-title">Welcome to Medwell Business Portal</h1>
   <p class="hero-sub">Manage all your healthcare businesses from one intelligent dashboard.</p>
-
   <div class="biz-grid">
-
-    <!-- Wholesale -->
     <a class="biz-card blue" href="wholesale.html">
       <div class="biz-icon">🏭</div>
       <div class="biz-name">Medwell Wholesale</div>
@@ -246,8 +98,6 @@
       <div class="biz-illus">📦</div>
       <div class="biz-arrow">›</div>
     </a>
-
-    <!-- Retail -->
     <a class="biz-card green" href="retail.html">
       <div class="biz-icon">🏪</div>
       <div class="biz-name">Medwell Retail</div>
@@ -255,8 +105,6 @@
       <div class="biz-illus">🏬</div>
       <div class="biz-arrow">›</div>
     </a>
-
-    <!-- Makkal -->
     <a class="biz-card orange" href="makkal.html">
       <div class="biz-icon">💊</div>
       <div class="biz-name">Makkal Marunthagam</div>
@@ -264,8 +112,6 @@
       <div class="biz-illus">👨‍⚕️</div>
       <div class="biz-arrow">›</div>
     </a>
-
-    <!-- Lab -->
     <a class="biz-card purple" href="lab.html">
       <div class="biz-icon">🔬</div>
       <div class="biz-name">Medwell Lab</div>
@@ -273,88 +119,105 @@
       <div class="biz-illus">🧪</div>
       <div class="biz-arrow">›</div>
     </a>
-
   </div>
 </div>
 
 <!-- ══ ANALYTICS ══ -->
 <div class="analytics">
   <div class="analytics-hdr">
-    <h2>Dashboard Analytics Section</h2>
-    <p>Professional analytics</p>
+    <div>
+      <h2>Business Overview</h2>
+      <p>Synced from all units — Wholesale, Retail, Makkal Marunthagam &amp; Lab</p>
+    </div>
+    <span class="year-badge" id="yearBadge">All Time</span>
   </div>
 
-  <div class="analytics-grid">
-
-    <!-- Stat cards 2×2 -->
-    <div class="stat-grid">
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-label">Last Day Sales</div>
-          <div class="stat-badge" style="background:#EFF6FF">🛒</div>
-        </div>
-        <div class="stat-value" id="stat-lastday">—</div>
+  <!-- Stat cards -->
+  <div class="stat-row">
+    <div class="stat-card s-blue">
+      <div class="stat-top">
+        <div class="stat-label">Purchase</div>
+        <div class="stat-badge" style="background:#EFF6FF">🛒</div>
       </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-label">Monthly Revenue</div>
-          <div class="stat-badge" style="background:#ECFDF5">💵</div>
-        </div>
-        <div class="stat-value" id="stat-monthly">—</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-label">Total Entries</div>
-          <div class="stat-badge" style="background:#FEF3C7">📊</div>
-        </div>
-        <div class="stat-value" id="stat-entries">—</div>
-      </div>
-
-      <div class="stat-card">
-        <div class="stat-top">
-          <div class="stat-label">Pending Purchases</div>
-          <div class="stat-badge" style="background:#F5F3FF">📋</div>
-        </div>
-        <div class="stat-value" id="stat-pending">—</div>
-      </div>
+      <div class="stat-value" id="stat-purchase">…</div>
+      <div class="stat-sub">Total purchase value</div>
     </div>
+    <div class="stat-card s-green">
+      <div class="stat-top">
+        <div class="stat-label">Sales</div>
+        <div class="stat-badge" style="background:#ECFDF5">📈</div>
+      </div>
+      <div class="stat-value" id="stat-sales">…</div>
+      <div class="stat-sub">Total sales revenue</div>
+    </div>
+    <div class="stat-card s-orange">
+      <div class="stat-top">
+        <div class="stat-label">Collection</div>
+        <div class="stat-badge" style="background:#FFF7ED">💰</div>
+      </div>
+      <div class="stat-value" id="stat-collection">…</div>
+      <div class="stat-sub">Total amount collected</div>
+    </div>
+    <div class="stat-card s-purple">
+      <div class="stat-top">
+        <div class="stat-label">Payment</div>
+        <div class="stat-badge" style="background:#F5F3FF">💳</div>
+      </div>
+      <div class="stat-value" id="stat-payment">…</div>
+      <div class="stat-sub">Total amount paid</div>
+    </div>
+  </div>
 
-    <!-- Donut chart -->
+  <!-- Charts row -->
+  <div class="charts-row">
+
+    <!-- Donut -->
     <div class="panel">
       <div class="panel-hdr">
-        <span class="panel-title">Cash in Hand</span>
+        <span class="panel-title">Distribution</span>
       </div>
-      <div class="donut-row">
-        <div class="donut-wrap">
-          <canvas id="donutChart"></canvas>
+      <p class="panel-sub">Purchase · Sales · Collection · Payment</p>
+      <div class="donut-wrap">
+        <canvas id="donutChart"></canvas>
+      </div>
+      <div class="legend">
+        <div class="leg-item">
+          <span class="leg-dot" style="background:#2563EB"></span>
+          <span>Purchase</span>
+          <span class="leg-val" id="leg-purchase">—</span>
         </div>
-        <div class="legend">
-          <div class="leg-item"><span class="leg-dot" style="background:#2563EB"></span><span id="leg-cash">Cash</span></div>
-          <div class="leg-item"><span class="leg-dot" style="background:#10B981"></span><span id="leg-upi">UPI</span></div>
-          <div class="leg-item"><span class="leg-dot" style="background:#F59E0B"></span><span id="leg-other">Other</span></div>
+        <div class="leg-item">
+          <span class="leg-dot" style="background:#10B981"></span>
+          <span>Sales</span>
+          <span class="leg-val" id="leg-sales">—</span>
+        </div>
+        <div class="leg-item">
+          <span class="leg-dot" style="background:#F59E0B"></span>
+          <span>Collection</span>
+          <span class="leg-val" id="leg-collection">—</span>
+        </div>
+        <div class="leg-item">
+          <span class="leg-dot" style="background:#8B5CF6"></span>
+          <span>Payment</span>
+          <span class="leg-val" id="leg-payment">—</span>
         </div>
       </div>
     </div>
 
-    <!-- Right column -->
-    <div class="right-col">
-
-      <!-- Line chart -->
-      <div class="line-card">
-        <div class="line-hdr">
-          <span class="panel-title">Sales Overview</span>
-          <select class="line-select" id="chartMode" onchange="switchChart(this.value)">
-            <option value="weekly">Weekly Sales</option>
-            <option value="monthly">Monthly Sales</option>
-          </select>
-        </div>
-        <canvas id="lineChart" height="110"></canvas>
+    <!-- Bar chart -->
+    <div class="bar-panel">
+      <div class="bar-hdr">
+        <span class="panel-title">Monthly Overview <span id="chartYear" style="font-size:12px;color:#9CA3AF;font-weight:500"></span></span>
+        <select class="metric-select" id="chartMetric" onchange="switchChart(this.value)">
+          <option value="sales">Sales</option>
+          <option value="purchase">Purchase</option>
+          <option value="collection">Collection</option>
+          <option value="payment">Payment</option>
+        </select>
       </div>
-
-
+      <canvas id="barChart" height="100"></canvas>
     </div>
+
   </div>
 </div>
 
@@ -363,10 +226,19 @@
   const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
   const db = supabase.createClient(SUPA_URL, SUPA_KEY);
 
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const CYR = new Date().getFullYear();
+
+  let monthlyData = {
+    purchase:   new Array(12).fill(0),
+    sales:      new Array(12).fill(0),
+    collection: new Array(12).fill(0),
+    payment:    new Array(12).fill(0),
+  };
+
   function parseDt(d) {
     if (!d) return null;
-    d = String(d).trim();
-    let m;
+    d = String(d).trim(); let m;
     m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (m) return new Date(+m[1], +m[2]-1, +m[3]);
     m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
@@ -376,10 +248,10 @@
     return null;
   }
 
-  async function fetchAll(table) {
+  async function fetchAll(table, fields) {
     const SIZE = 1000; let all = [], from = 0;
     while (true) {
-      const { data, error } = await db.from(table).select('*').range(from, from + SIZE - 1);
+      const { data, error } = await db.from(table).select(fields).range(from, from + SIZE - 1);
       if (error || !data || !data.length) break;
       all = all.concat(data);
       if (data.length < SIZE) break;
@@ -388,130 +260,154 @@
     return all;
   }
 
-  let allSalesGlobal = [];
-
-  function switchChart(mode) {
-    const now = new Date();
-    if (mode === 'monthly') {
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      const values = months.map((_, i) =>
-        allSalesGlobal.filter(r => r.dt.getFullYear() === now.getFullYear() && r.dt.getMonth() === i)
-          .reduce((s,r) => s + r.amt, 0)
-      );
-      barChart.data.labels = months;
-      barChart.data.datasets[0].data = values;
-    } else {
-      const labels = [], values = [];
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date(now); d.setDate(d.getDate() - i);
-        labels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
-        values.push(allSalesGlobal.filter(r => r.dt.toDateString() === d.toDateString()).reduce((s,r) => s + r.amt, 0));
-      }
-      barChart.data.labels = labels;
-      barChart.data.datasets[0].data = values;
-    }
-    barChart.update();
+  function fmtAmt(n) {
+    if (!n || n === 0) return '₹0';
+    if (n >= 10000000) return '₹' + (n/10000000).toFixed(2) + ' Cr';
+    if (n >= 100000)   return '₹' + (n/100000).toFixed(2) + ' L';
+    if (n >= 1000)     return '₹' + (n/1000).toFixed(1) + 'K';
+    return '₹' + n.toLocaleString('en-IN', {minimumFractionDigits:2});
   }
 
-  // Init charts with placeholder data
+  function tickFmt(v) {
+    if (v >= 100000) return '₹' + (v/100000).toFixed(1) + 'L';
+    if (v >= 1000)   return '₹' + (v/1000) + 'K';
+    return '₹' + v;
+  }
+
+  // ── Init charts ──
   const donutChart = new Chart(document.getElementById('donutChart'), {
     type: 'doughnut',
     data: {
-      labels: ['Cash','UPI','Other'],
-      datasets: [{ data: [1,1,1], backgroundColor: ['#2563EB','#10B981','#F59E0B'], borderWidth: 0, hoverOffset: 6 }]
+      labels: ['Purchase','Sales','Collection','Payment'],
+      datasets: [{
+        data: [1,1,1,1],
+        backgroundColor: ['#2563EB','#10B981','#F59E0B','#8B5CF6'],
+        borderWidth: 2,
+        borderColor: '#fff',
+        hoverOffset: 6
+      }]
     },
     options: {
-      cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.parsed + '%' } } },
-      responsive: true, maintainAspectRatio: true
-    }
-  });
-
-  const barChart = new Chart(document.getElementById('lineChart'), {
-    type: 'bar',
-    data: {
-      labels: ['','','','','','',''],
-      datasets: [{ label: 'Sales', data: [0,0,0,0,0,0,0], backgroundColor: 'rgba(37,99,235,0.85)', borderRadius: 5, borderSkipped: false }]
-    },
-    options: {
-      plugins: { legend: { display: false } },
-      scales: {
-        y: { grid: { color: '#F3F4F6' }, beginAtZero: true, ticks: { font: { size: 10 }, color: '#9CA3AF', callback: v => '₹' + v.toLocaleString('en-IN') } },
-        x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#9CA3AF' } }
+      cutout: '65%',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + fmtAmt(ctx.raw) } }
       },
       responsive: true, maintainAspectRatio: true
     }
   });
 
+  const colorMap = { sales: '#10B981', purchase: '#2563EB', collection: '#F59E0B', payment: '#8B5CF6' };
+
+  const barChart = new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [{
+        label: 'Sales',
+        data: new Array(12).fill(0),
+        backgroundColor: '#10B981',
+        borderRadius: 5,
+        borderSkipped: false,
+        barPercentage: 0.6
+      }]
+    },
+    options: {
+      plugins: { legend: { display: false } },
+      scales: {
+        y: {
+          beginAtZero: true,
+          grid: { color: '#F3F4F6' },
+          ticks: {
+            stepSize: 5000,
+            font: { size: 10 },
+            color: '#9CA3AF',
+            callback: tickFmt
+          }
+        },
+        x: {
+          grid: { display: false },
+          ticks: { font: { size: 11 }, color: '#6B7280' }
+        }
+      },
+      responsive: true,
+      maintainAspectRatio: true
+    }
+  });
+
+  function switchChart(metric) {
+    barChart.data.datasets[0].label = metric.charAt(0).toUpperCase() + metric.slice(1);
+    barChart.data.datasets[0].data = [...monthlyData[metric]];
+    barChart.data.datasets[0].backgroundColor = colorMap[metric];
+    barChart.update();
+  }
+
   async function loadDashboard() {
-    const [retail, makkal, wholesale, purchases] = await Promise.all([
-      fetchAll('retail_sales'),
-      fetchAll('makkal_sales'),
-      fetchAll('wholesale_sales'),
-      fetchAll('wholesale_purchases'),
+    const [
+      wPurchases, mPurchases,
+      wSales, rSales, mSales,
+      wCollection, mCollection, labCol,
+      wPayments, mPayments
+    ] = await Promise.all([
+      fetchAll('wholesale_purchases', 'txn_date,invoice'),
+      fetchAll('makkal_purchases',   'txn_date,invoice'),
+      fetchAll('wholesale_sales',    'txn_date,invoice_amt'),
+      fetchAll('retail_sales',       'txn_date,amount'),
+      fetchAll('makkal_sales',       'txn_date,amount'),
+      fetchAll('wholesale_collection','txn_date,amount_received'),
+      fetchAll('makkal_collection',  'txn_date,amount_received'),
+      fetchAll('lab_collection',     'txn_date,total_amount'),
+      fetchAll('wholesale_payments', 'txn_date,amount_received'),
+      fetchAll('makkal_payments',    'txn_date,amount_received'),
     ]);
 
-    // Combine all sales with parsed dates
-    allSalesGlobal = [
-      ...retail.map(r   => ({ dt: parseDt(r.txn_date), amt: +r.amount      || 0, mode: (r.mode||'').toLowerCase() })),
-      ...makkal.map(r   => ({ dt: parseDt(r.txn_date), amt: +r.amount      || 0, mode: (r.mode||'').toLowerCase() })),
-      ...wholesale.map(r=> ({ dt: parseDt(r.txn_date), amt: +r.invoice_amt || 0, mode: '' })),
-    ].filter(r => r.dt);
-    const allSales = allSalesGlobal;
+    // ── Monthly breakdown (current year) ──
+    monthlyData = { purchase: new Array(12).fill(0), sales: new Array(12).fill(0), collection: new Array(12).fill(0), payment: new Array(12).fill(0) };
 
-    const now = new Date();
-
-    // ── Last Day Sales (yesterday) ──
-    const yesterday = new Date(now);
-    yesterday.setDate(now.getDate() - 1);
-    const yesterdayStr = yesterday.toDateString();
-    const lastDaySales = allSales
-      .filter(r => r.dt.toDateString() === yesterdayStr)
-      .reduce((s, r) => s + r.amt, 0);
-
-    // ── Monthly Revenue (current month) ──
-    const monthlyRev = allSales
-      .filter(r => r.dt.getMonth() === now.getMonth() && r.dt.getFullYear() === now.getFullYear())
-      .reduce((s,r) => s + r.amt, 0);
-
-    // ── Total Entries ──
-    const totalEntries = retail.length + makkal.length + wholesale.length;
-
-    // ── Pending Purchases ──
-    const pendingCount = purchases.filter(r => !r.status || r.status === 'Pending').length;
-
-    // Update stat cards
-    document.getElementById('stat-lastday').textContent = '₹' + lastDaySales.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});
-    document.getElementById('stat-monthly').textContent = monthlyRev >= 100000
-      ? '₹' + (monthlyRev/100000).toFixed(2) + 'L'
-      : '₹' + (monthlyRev/1000).toFixed(1) + 'K';
-    document.getElementById('stat-entries').textContent = totalEntries.toLocaleString('en-IN');
-    document.getElementById('stat-pending').textContent = pendingCount + ' orders';
-
-    // ── Donut: Cash vs UPI (retail + makkal only) ──
-    const modeSales = [...retail, ...makkal];
-    const cashAmt  = modeSales.filter(r => (r.mode||r.Payment_Mode||'').toLowerCase() === 'cash').reduce((s,r) => s + (+r.amount||0), 0);
-    const upiAmt   = modeSales.filter(r => (r.mode||'').toLowerCase() === 'upi').reduce((s,r)  => s + (+r.amount||0), 0);
-    const otherAmt = modeSales.filter(r => !['cash','upi'].includes((r.mode||'').toLowerCase())).reduce((s,r) => s + (+r.amount||0), 0);
-    const total = cashAmt + upiAmt + otherAmt || 1;
-    const cp = Math.round(cashAmt/total*100), up = Math.round(upiAmt/total*100), op = 100-cp-up;
-    donutChart.data.datasets[0].data = [cp, up, op];
-    donutChart.update();
-    document.getElementById('leg-cash').textContent  = `Cash (${cp}%)`;
-    document.getElementById('leg-upi').textContent   = `UPI (${up}%)`;
-    document.getElementById('leg-other').textContent = `Other (${op}%)`;
-
-    // ── Bar chart: last 7 days ──
-    const labels = [], values = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date(now); d.setDate(d.getDate() - i);
-      const ds = d.toDateString();
-      labels.push(d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}));
-      values.push(allSales.filter(r => r.dt.toDateString() === ds).reduce((s,r) => s + r.amt, 0));
+    function addMonthly(rows, amtField, cat) {
+      rows.forEach(r => {
+        const dt = parseDt(r.txn_date);
+        if (!dt || dt.getFullYear() !== CYR) return;
+        monthlyData[cat][dt.getMonth()] += +(r[amtField] || 0);
+      });
     }
-    barChart.data.labels = labels;
-    barChart.data.datasets[0].data = values;
-    barChart.update();
+
+    addMonthly(wPurchases, 'invoice',        'purchase');
+    addMonthly(mPurchases, 'invoice',        'purchase');
+    addMonthly(wSales,     'invoice_amt',    'sales');
+    addMonthly(rSales,     'amount',         'sales');
+    addMonthly(mSales,     'amount',         'sales');
+    addMonthly(wCollection,'amount_received','collection');
+    addMonthly(mCollection,'amount_received','collection');
+    addMonthly(labCol,     'total_amount',   'collection');
+    addMonthly(wPayments,  'amount_received','payment');
+    addMonthly(mPayments,  'amount_received','payment');
+
+    // ── All-time totals for stat cards & donut ──
+    function sum(rows, field) { return rows.reduce((s,r) => s + +(r[field]||0), 0); }
+
+    const totPurchase   = sum(wPurchases,'invoice')        + sum(mPurchases,'invoice');
+    const totSales      = sum(wSales,'invoice_amt')        + sum(rSales,'amount')         + sum(mSales,'amount');
+    const totCollection = sum(wCollection,'amount_received')+ sum(mCollection,'amount_received') + sum(labCol,'total_amount');
+    const totPayment    = sum(wPayments,'amount_received') + sum(mPayments,'amount_received');
+
+    // ── Stat cards ──
+    document.getElementById('stat-purchase').textContent   = fmtAmt(totPurchase);
+    document.getElementById('stat-sales').textContent      = fmtAmt(totSales);
+    document.getElementById('stat-collection').textContent = fmtAmt(totCollection);
+    document.getElementById('stat-payment').textContent    = fmtAmt(totPayment);
+
+    // ── Donut ──
+    donutChart.data.datasets[0].data = [totPurchase, totSales, totCollection, totPayment];
+    donutChart.update();
+    document.getElementById('leg-purchase').textContent   = fmtAmt(totPurchase);
+    document.getElementById('leg-sales').textContent      = fmtAmt(totSales);
+    document.getElementById('leg-collection').textContent = fmtAmt(totCollection);
+    document.getElementById('leg-payment').textContent    = fmtAmt(totPayment);
+
+    // ── Bar chart (default: sales, current year) ──
+    document.getElementById('chartYear').textContent = CYR;
+    switchChart(document.getElementById('chartMetric').value);
   }
 
   loadDashboard();
