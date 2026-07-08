@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>Collection &ndash; Makkal Marunthagam</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Segoe UI',system-ui,sans-serif;background:#F1F5F9;min-height:100vh;color:#111827}
+    .topbar{background:#fff;border-bottom:1px solid #D1FAE5;height:60px;display:flex;align-items:center;padding:0 28px;gap:14px;position:sticky;top:0;z-index:50;box-shadow:0 1px 6px rgba(16,185,129,0.08)}
+    .back-btn{display:flex;align-items:center;gap:7px;background:none;border:1.5px solid #E5E7EB;border-radius:9px;padding:7px 14px;font-size:13px;font-weight:600;color:#374151;text-decoration:none}
+    .back-btn:hover{background:#F9FAFB}
+    .divider{width:1px;height:26px;background:#E5E7EB}
+    .topbar-icon{width:36px;height:36px;border-radius:10px;background:#ECFDF5;display:flex;align-items:center;justify-content:center;font-size:18px}
+    .topbar-info{flex:1}
+    .topbar-name{font-size:16px;font-weight:700;color:#111827}
+    .topbar-sub{font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.7px}
+    .topbar-badge{background:#FFF7ED;color:#C2410C;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;border:1px solid #FED7AA}
+    .breadcrumb{background:#fff;border-bottom:1px solid #E5E7EB;padding:10px 28px;display:flex;align-items:center;gap:8px;font-size:12px;color:#9CA3AF}
+    .breadcrumb a{color:#059669;text-decoration:none}
+    .breadcrumb a:hover{text-decoration:underline}
+    .breadcrumb .sep{color:#D1D5DB}
+    .breadcrumb .current{color:#111827;font-weight:600}
+    .body{padding:28px}
+    .toolbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+    .toolbar-left{display:flex;align-items:center;gap:10px}
+    .page-title{font-size:20px;font-weight:800;color:#111827;letter-spacing:-.4px}
+    .record-count{font-size:12px;color:#6B7280;background:#F3F4F6;padding:4px 12px;border-radius:20px}
+    .toolbar-right{display:flex;align-items:center;gap:10px}
+    .search-box{display:flex;align-items:center;gap:8px;background:#fff;border:1.5px solid #E5E7EB;border-radius:9px;padding:8px 14px}
+    .search-box input{border:none;outline:none;font-size:13px;color:#374151;width:200px}
+    .btn{display:flex;align-items:center;gap:6px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;border:none}
+    .btn-primary{background:#EA580C;color:white}
+    .btn-primary:hover{background:#C2410C}
+    .btn-outline{background:#fff;color:#374151;border:1.5px solid #E5E7EB}
+    .btn-outline:hover{background:#F9FAFB}
+    .btn-export{background:#F5F3FF;color:#7C3AED;border:1.5px solid #DDD6FE;cursor:pointer}
+    .btn-export:hover{background:#EDE9FE}
+    .btn-import{background:#FFF7ED;color:#C2410C;border:1.5px solid #FED7AA;cursor:pointer}
+    .btn-import:hover{background:#FFEDD5}
+    .btn-edit{padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:1.5px solid #FED7AA;background:#FFF7ED;color:#C2410C;cursor:pointer}
+    .btn-edit:hover{background:#FFEDD5}
+    .btn-del{padding:4px 10px;font-size:11px;font-weight:600;border-radius:6px;border:1.5px solid #FEE2E2;background:#FFF5F5;color:#DC2626;cursor:pointer}
+    .btn-del:hover{background:#FEE2E2}
+    .action-cell{display:flex;gap:6px;align-items:center}
+    #importOverlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:9999;align-items:center;justify-content:center}
+    #importOverlay.show{display:flex}
+    .import-box{background:#fff;border-radius:16px;padding:32px 36px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,0.2);text-align:center}
+    .import-box h3{font-size:16px;font-weight:700;color:#111827;margin-bottom:6px}
+    .import-box p{font-size:13px;color:#6B7280;margin-bottom:20px}
+    .prog-track{background:#E5E7EB;border-radius:99px;height:10px;overflow:hidden;margin-bottom:10px}
+    .prog-bar{height:100%;background:linear-gradient(90deg,#EA580C,#FB923C);border-radius:99px;transition:width 0.3s ease;width:0%}
+    .prog-label{font-size:12px;color:#6B7280}
+    .summary-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+    .sum-card{background:#fff;border-radius:12px;padding:16px 18px;box-shadow:0 1px 4px rgba(0,0,0,0.05);border-left:4px solid transparent}
+    .sum-card.blue{border-left-color:#2563EB}.sum-card.green{border-left-color:#10B981}
+    .sum-card.orange{border-left-color:#F59E0B}.sum-card.purple{border-left-color:#8B5CF6}
+    .sum-label{font-size:11px;color:#9CA3AF;text-transform:uppercase;letter-spacing:.7px;margin-bottom:6px}
+    .sum-value{font-size:18px;font-weight:800;color:#111827;letter-spacing:-.4px}
+    .sum-sub{font-size:11px;color:#6B7280;margin-top:3px}
+    .table-wrap{background:#fff;border-radius:14px;box-shadow:0 1px 6px rgba(0,0,0,0.06);overflow:hidden}
+    .table-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid #F3F4F6}
+    .table-header-title{font-size:14px;font-weight:700;color:#111827}
+    .table-header-sub{font-size:11px;color:#9CA3AF;margin-top:2px}
+    .table-scroll{overflow-x:auto}
+    table{width:100%;border-collapse:collapse;font-size:13px;min-width:980px}
+    thead th{background:#F8FAFC;padding:12px 16px;text-align:left;font-size:11px;font-weight:700;color:#6B7280;text-transform:uppercase;letter-spacing:.7px;border-bottom:1px solid #E5E7EB;white-space:nowrap}
+    tbody tr{border-bottom:1px solid #F3F4F6;transition:background .12s}
+    tbody tr:last-child{border-bottom:none}
+    tbody tr:hover{background:#F8FAFC}
+    tbody td{padding:13px 16px;color:#374151;vertical-align:middle}
+    th.right,td.right{text-align:right}
+    .status-badge{padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700;display:inline-block}
+    .s-paid{background:#D1FAE5;color:#059669}.s-partial{background:#DBEAFE;color:#2563EB}.s-pending{background:#FEF3C7;color:#D97706}
+    .empty-row td{text-align:center;padding:48px;color:#9CA3AF;font-size:14px}
+    .pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-top:1px solid #F3F4F6;font-size:12px;color:#6B7280}
+    .page-btns{display:flex;gap:6px}
+    .page-btn{width:30px;height:30px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid #E5E7EB;background:#fff;color:#374151}
+    .page-btn.active{background:#EA580C;color:white;border-color:#EA580C}
+    .page-btn:hover:not(.active){background:#F3F4F6}
+    #modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:200;align-items:center;justify-content:center}
+    .modal-box{background:#fff;border-radius:16px;padding:28px;width:640px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.22);display:flex;flex-direction:column;gap:18px}
+    .modal-head{display:flex;justify-content:space-between;align-items:center}
+    .modal-head span{font-size:16px;font-weight:700;color:#111827}
+    .modal-head button{background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF}
+    .field-label{font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px}
+    .field-input{width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;color:#111827;font-family:inherit}
+    .field-input:focus{border-color:#EA580C}
+    .party-search-wrap{position:relative}
+    #party_suggestions{display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid #E5E7EB;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:99;max-height:200px;overflow-y:auto;margin-top:4px}
+    .suggestion-item{padding:10px 14px;font-size:13px;cursor:pointer;color:#111827;border-bottom:1px solid #F3F4F6}
+    .suggestion-item:last-child{border-bottom:none}
+    .suggestion-item:hover{background:#FFF7ED;color:#C2410C}
+    .suggestion-item mark{background:#FED7AA;color:#9A3412;border-radius:2px;font-style:normal}
+    #selected_party_chip{display:none;align-items:center;gap:8px;background:#FFF7ED;border:1.5px solid #FED7AA;border-radius:8px;padding:8px 12px}
+    #selected_party_chip .chip-name{font-size:13px;font-weight:600;color:#9A3412;flex:1}
+    #selected_party_chip button{background:none;border:none;font-size:14px;cursor:pointer;color:#6B7280}
+    #selected_party_chip button:hover{color:#DC2626}
+    #bill_section{display:none}
+    .bill-list-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .bill-list-head span{font-size:12px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:.5px}
+    .bill-list-head label{display:flex;align-items:center;gap:6px;font-size:12px;color:#6B7280;cursor:pointer}
+    .bill-list{border:1.5px solid #E5E7EB;border-radius:10px;max-height:220px;overflow-y:auto}
+    .bill-row{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #F3F4F6;cursor:pointer;transition:background .1s}
+    .bill-row:last-child{border-bottom:none}
+    .bill-row:hover{background:#F8FAFC}
+    .bill-row.checked{background:#FFF7ED}
+    .bill-row input[type=checkbox]{width:16px;height:16px;cursor:pointer;accent-color:#EA580C}
+    .bill-no-text{font-size:13px;font-weight:600;color:#EA580C;font-family:monospace;flex:1}
+    .bill-amt-text{font-size:13px;font-weight:700;color:#111827}
+    .bill-empty{padding:20px;text-align:center;font-size:13px;color:#9CA3AF}
+    #bill_summary{display:flex;align-items:center;justify-content:space-between;background:#F8FAFC;border:1.5px solid #E5E7EB;border-radius:8px;padding:10px 14px;margin-top:10px}
+    #bill_summary .sum-status{font-size:12px;font-weight:600;color:#6B7280}
+    #bill_summary .sum-total{font-size:14px;font-weight:800;color:#111827}
+    .modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:900px){.summary-row{grid-template-columns:repeat(2,1fr)}.topbar{padding:0 16px}.body{padding:16px}.modal-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <a class="back-btn" href="makkal.html">&#8592; Back</a>
+  <div class="divider"></div>
+  <div class="topbar-icon">&#x1F4B0;</div>
+  <div class="topbar-info">
+    <div class="topbar-name">Collection Register</div>
+    <div class="topbar-sub">Makkal Marunthagam</div>
+  </div>
+  <span class="topbar-badge">COLLECTION</span>
+</div>
+
+<div class="breadcrumb">
+  <a href="index.html">Dashboard</a>
+  <span class="sep">&#x203A;</span>
+  <a href="makkal.html">Makkal Marunthagam</a>
+  <span class="sep">&#x203A;</span>
+  <span class="current">Collection</span>
+</div>
+
+<div class="body">
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="page-title">Collection Register</div>
+      <span class="record-count" id="record-count">0 records</span>
+    </div>
+    <div class="toolbar-right">
+      <div class="search-box">
+        <svg width="14" height="14" fill="none" stroke="#9CA3AF" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        <input type="text" id="searchInput" placeholder="Search party, voucher…" oninput="filterTable()"/>
+      </div>
+      <select id="filterMonth" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+        <option value="">All Months</option>
+        <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+        <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+        <option value="07">July</option><option value="08">August</option><option value="09">September</option>
+        <option value="10">October</option><option value="11">November</option><option value="12">December</option>
+      </select>
+      <select id="filterYear" onchange="filterTable()" style="padding:7px 10px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;background:#fff;color:#374151;cursor:pointer;outline:none;">
+        <option value="">All Years</option>
+        <option value="2024">2024</option><option value="2025">2025</option>
+        <option value="2026">2026</option><option value="2027">2027</option><option value="2028">2028</option>
+      </select>
+      <button class="btn btn-outline" onclick="window.print()">&#x1F5A8; Print</button>
+      <button class="btn btn-export" onclick="exportData()">&#x2B07; Export</button>
+      <label class="btn btn-import" title="Import Excel/CSV">
+        &#x2B06; Import
+        <input type="file" accept=".xlsx,.xls,.csv" style="display:none" onchange="importFile(event)"/>
+      </label>
+      <button class="btn btn-primary" onclick="addRow()">+ Add</button>
+    </div>
+  </div>
+
+  <div class="summary-row">
+    <div class="sum-card blue"><div class="sum-label">Total Collected</div><div class="sum-value" id="totalPaid">&#x20B9;0.00</div><div class="sum-sub">All entries</div></div>
+    <div class="sum-card green"><div class="sum-label">Full Collections</div><div class="sum-value" id="totalFull">0</div><div class="sum-sub">Paid status</div></div>
+    <div class="sum-card orange"><div class="sum-label">Partial Collections</div><div class="sum-value" id="totalPartial">0</div><div class="sum-sub">Partial status</div></div>
+    <div class="sum-card purple"><div class="sum-label">Total Entries</div><div class="sum-value" id="totalEntries">0</div><div class="sum-sub">Transactions</div></div>
+  </div>
+
+  <div class="table-wrap">
+    <div class="table-header">
+      <div><div class="table-header-title">Collection Entries</div><div class="table-header-sub">Makkal Marunthagam</div></div>
+      <span style="font-size:11px;color:#9CA3AF">MEDWELL LOGIX &#x2014; Tiruchirapalli</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th><th>Party Name</th><th>Date</th><th>Voucher No</th>
+            <th class="right">Invoice Amount (&#x20B9;)</th>
+            <th class="right">Amount Received (&#x20B9;)</th>
+            <th class="right">Balance (&#x20B9;)</th>
+            <th>Status</th><th>Payment Mode</th><th>Remarks</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="collectionBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <span id="paginationInfo">Showing 0&#x2013;0 of 0</span>
+      <div class="page-btns" id="pageBtns"></div>
+    </div>
+  </div>
+</div>
+
+<div id="importOverlay">
+  <div class="import-box">
+    <h3>Importing Records</h3>
+    <p id="importMsg">Reading file&#x2026;</p>
+    <div class="prog-track"><div class="prog-bar" id="progBar"></div></div>
+    <div class="prog-label" id="progLabel">0 / 0 rows</div>
+  </div>
+</div>
+
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-head">
+      <span id="modalTitle">Add Collection Entry</span>
+      <button onclick="closeModal()">&#x2715;</button>
+    </div>
+    <div>
+      <label class="field-label">Party Name</label>
+      <div class="party-search-wrap">
+        <input id="party_search" class="field-input" type="text" placeholder="Type to search party from purchases…"
+          oninput="onPartySearch()" onfocus="onPartySearch()" autocomplete="off"/>
+        <div id="party_suggestions"></div>
+      </div>
+      <div id="selected_party_chip" style="margin-top:8px;">
+        <span class="chip-name" id="chip_name"></span>
+        <button onclick="clearParty()" title="Clear">&#x2715;</button>
+      </div>
+    </div>
+    <div id="bill_section">
+      <div class="bill-list-head">
+        <span>Select Vouchers to Collect</span>
+        <label><input type="checkbox" id="select_all_bills" onchange="toggleAllBills(this.checked)"/> Select All</label>
+      </div>
+      <div class="bill-list" id="bill_list"><div class="bill-empty">Select a party to view vouchers</div></div>
+      <div id="bill_summary">
+        <span class="sum-status" id="status_preview">No vouchers selected</span>
+        <span class="sum-total" id="total_preview">&#x20B9;0.00</span>
+      </div>
+    </div>
+    <div class="modal-grid">
+      <div><label class="field-label">Date</label><input id="f_date" class="field-input" type="date"/></div>
+      <div>
+        <label class="field-label">Payment Mode</label>
+        <select id="f_mode" class="field-input">
+          <option value="Cash">Cash</option><option value="Cheque">Cheque</option>
+          <option value="NEFT">NEFT</option><option value="RTGS">RTGS</option>
+          <option value="UPI">UPI</option><option value="Other">Other</option>
+        </select>
+      </div>
+      <div><label class="field-label">Amount Received (&#x20B9;)</label>
+        <input id="f_amount_received" class="field-input" type="number" step="0.01" min="0" placeholder="0.00" oninput="updateBillSummary()"/></div>
+      <div><label class="field-label">Remarks</label><input id="f_remarks" class="field-input" type="text" placeholder="Optional notes"/></div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="closeModal()" style="padding:9px 20px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;">Cancel</button>
+      <button id="saveBtn" onclick="saveRow()" style="padding:9px 24px;background:#EA580C;color:white;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Save Entry</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const SUPA_URL='https://ascolgmqofzoaqukkhvk.supabase.co';
+  const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFzY29sZ21xb2Z6b2FxdWtraHZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI1NTU5ODgsImV4cCI6MjA5ODEzMTk4OH0.d-WVh4Al9siYBxnnEtuEtn2__uekflwGWFJLB560lPc';
+  const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+  let data=[],filtered=[],currentPage=1,editingId=null;
+  const PAGE_SIZE=50;
+  let allParties=[],currentBills=[];
+
+  async function loadData(){
+    document.getElementById('collectionBody').innerHTML='<tr class="empty-row"><td colspan="11">Loading&#x2026;</td></tr>';
+    const FETCH_SIZE=1000; let allRows=[],from=0;
+    while(true){
+      const{data:rows,error}=await db.from('makkal_collection').select('*').order('created_at',{ascending:false}).range(from,from+FETCH_SIZE-1);
+      if(error){document.getElementById('collectionBody').innerHTML=`<tr class="empty-row"><td colspan="11" style="color:#EF4444">Error: ${error.message}</td></tr>`;return;}
+      if(!rows||rows.length===0) break;
+      allRows=allRows.concat(rows); if(rows.length<FETCH_SIZE) break; from+=FETCH_SIZE;
+    }
+    data=allRows;filtered=[...data];currentPage=1;renderTable();
+  }
+
+  async function loadParties(){
+    const FETCH_SIZE=1000; let allRows=[],from=0;
+    while(true){
+      const{data:rows,error}=await db.from('makkal_purchases').select('party').range(from,from+FETCH_SIZE-1);
+      if(error||!rows||rows.length===0) break;
+      allRows=allRows.concat(rows); if(rows.length<FETCH_SIZE) break; from+=FETCH_SIZE;
+    }
+    allParties=[...new Set(allRows.map(r=>r.party).filter(Boolean))].sort();
+  }
+
+  async function fetchBillsForParty(name){
+    const FETCH_SIZE=1000; let allRows=[],from=0;
+    while(true){
+      const{data:rows,error}=await db.from('makkal_purchases').select('vch,invoice').eq('party',name).order('created_at',{ascending:false}).range(from,from+FETCH_SIZE-1);
+      if(error||!rows||rows.length===0) break;
+      allRows=allRows.concat(rows); if(rows.length<FETCH_SIZE) break; from+=FETCH_SIZE;
+    }
+    return allRows.filter(r=>r.vch);
+  }
+
+  function fmt(n){if(!n&&n!==0)return'—';const v=Number(n);if(v===0)return'—';return'₹'+v.toLocaleString('en-IN',{minimumFractionDigits:2,maximumFractionDigits:2});}
+  function statusBadge(s){const cls=s==='Paid'?'s-paid':s==='Partial'?'s-partial':'s-pending';return`<span class="status-badge ${cls}">${s||'Pending'}</span>`;}
+
+  function renderTable(){
+    const start=(currentPage-1)*PAGE_SIZE,end=Math.min(start+PAGE_SIZE,filtered.length);
+    const tbody=document.getElementById('collectionBody');
+    if(!filtered.slice(start,end).length){tbody.innerHTML='<tr class="empty-row"><td colspan="11">No records found</td></tr>';}
+    else{tbody.innerHTML=filtered.slice(start,end).map((r,i)=>`
+      <tr>
+        <td style="color:#9CA3AF;font-size:12px">${start+i+1}</td>
+        <td style="font-weight:600;color:#111827">${r.party||'—'}</td>
+        <td style="color:#6B7280;font-size:12px;white-space:nowrap">${r.txn_date||'—'}</td>
+        <td style="font-family:monospace;font-size:12px;color:#EA580C;font-weight:600;max-width:180px;word-break:break-all">${r.bill_no||'—'}</td>
+        <td class="right" style="font-weight:700">${fmt(r.invoice_amount)}</td>
+        <td class="right" style="font-weight:700;color:#EA580C">${fmt(r.amount_received)}</td>
+        <td class="right" style="font-weight:700;color:#DC2626">${fmt((Number(r.invoice_amount)||0)-(Number(r.amount_received)||0))}</td>
+        <td>${statusBadge(r.status)}</td>
+        <td><span style="padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;background:#F3F4F6;color:#374151">${r.mode||'—'}</span></td>
+        <td style="font-size:12px;color:#6B7280">${r.remarks||'—'}</td>
+        <td><div class="action-cell">
+          <button class="btn-edit" onclick="editRow('${r.id}')">&#x270F; Edit</button>
+          <button class="btn-del" onclick="deleteRow('${r.id}')">&#x1F5D1; Delete</button>
+        </div></td>
+      </tr>`).join('');}
+    document.getElementById('paginationInfo').textContent=`Showing ${filtered.length?start+1:0}–${end} of ${filtered.length}`;
+    document.getElementById('record-count').textContent=filtered.length+' records';
+    renderPagination();updateSummary();
+  }
+
+  function renderPagination(){
+    const total=Math.ceil(filtered.length/PAGE_SIZE),btns=document.getElementById('pageBtns');btns.innerHTML='';
+    for(let p=1;p<=total;p++){const b=document.createElement('div');b.className='page-btn'+(p===currentPage?' active':'');b.textContent=p;b.onclick=()=>{currentPage=p;renderTable();};btns.appendChild(b);}
+  }
+
+  function updateSummary(){
+    let total=0,full=0,partial=0;
+    filtered.forEach(r=>{total+=Number(r.amount_received)||0;if(r.status==='Paid')full++;if(r.status==='Partial')partial++;});
+    document.getElementById('totalPaid').textContent='₹'+total.toLocaleString('en-IN',{minimumFractionDigits:2});
+    document.getElementById('totalFull').textContent=full;
+    document.getElementById('totalPartial').textContent=partial;
+    document.getElementById('totalEntries').textContent=filtered.length;
+  }
+
+  function fmtDate(v){if(!v)return null;const m=String(v).match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?m[3]+'-'+m[2]+'-'+m[1]:(v||null);}
+  function toInputDate(v){if(!v)return'';const m=String(v).match(/^(\d{1,2})-(\d{1,2})-(\d{4})$/);return m?m[3]+'-'+m[2].padStart(2,'0')+'-'+m[1].padStart(2,'0'):v;}
+  function importDate(v){
+    if(!v)return null;v=String(v).trim();let m;
+    m=v.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return m[3].padStart(2,'0')+'-'+m[2].padStart(2,'0')+'-'+m[1];
+    m=v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);if(m)return m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')+'-'+m[3];
+    m=v.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);if(m)return m[1].padStart(2,'0')+'-'+m[2].padStart(2,'0')+'-20'+m[3];
+    return v||null;
+  }
+
+  function parseDate(d){
+    if(!d)return null;d=String(d).trim();let m;
+    m=d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);if(m)return{year:m[1],month:m[2].padStart(2,'0')};
+    m=d.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{4})$/);if(m)return{year:m[3],month:m[2].padStart(2,'0')};
+    m=d.match(/^(\d{1,2})[\/\.\-](\d{1,2})[\/\.\-](\d{2})$/);if(m)return{year:'20'+m[3],month:m[2].padStart(2,'0')};
+    return null;
+  }
+
+  function filterTable(){
+    const q=document.getElementById('searchInput').value.toLowerCase().trim();
+    const month=document.getElementById('filterMonth').value,year=document.getElementById('filterYear').value;
+    filtered=data.filter(r=>{
+      if(q&&![(r.party||''),(r.bill_no||''),(r.status||''),(r.mode||''),(r.txn_date||'')].some(s=>s.toLowerCase().includes(q)))return false;
+      if(month||year){const p=parseDate(r.txn_date);if(!p)return false;if(month&&p.month!==month)return false;if(year&&p.year!==year)return false;}
+      return true;
+    });
+    currentPage=1;renderTable();
+  }
+
+  function onPartySearch(){
+    const q=document.getElementById('party_search').value.trim().toLowerCase();
+    const box=document.getElementById('party_suggestions');
+    const matches=q?allParties.filter(p=>p.toLowerCase().includes(q)).slice(0,10):allParties.slice(0,10);
+    if(!matches.length){box.style.display='none';return;}
+    box.innerHTML=matches.map(p=>{
+      const hi=q?p.replace(new RegExp('('+q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+')','gi'),'<mark>$1</mark>'):p;
+      return`<div class="suggestion-item" onmousedown="selectParty('${p.replace(/'/g,"\\'")}')"> ${hi} </div>`;
+    }).join('');
+    box.style.display='block';
+  }
+
+  async function selectParty(name){
+    document.getElementById('party_search').value='';
+    document.getElementById('party_suggestions').style.display='none';
+    document.getElementById('chip_name').textContent=name;
+    document.getElementById('selected_party_chip').style.display='flex';
+    document.getElementById('bill_section').style.display='block';
+    document.getElementById('bill_list').innerHTML='<div class="bill-empty">Loading vouchers…</div>';
+    document.getElementById('select_all_bills').checked=false;
+    currentBills=await fetchBillsForParty(name);
+    renderBillList([]);
+  }
+
+  function clearParty(){
+    document.getElementById('selected_party_chip').style.display='none';
+    document.getElementById('chip_name').textContent='';
+    document.getElementById('bill_section').style.display='none';
+    currentBills=[];
+  }
+
+  document.addEventListener('click',e=>{if(!e.target.closest('.party-search-wrap'))document.getElementById('party_suggestions').style.display='none';});
+
+  function renderBillList(preChecked){
+    const list=document.getElementById('bill_list');
+    if(!currentBills.length){list.innerHTML='<div class="bill-empty">No vouchers found for this party</div>';updateBillSummary();return;}
+    list.innerHTML=currentBills.map((b,i)=>{
+      const checked=preChecked.includes(b.vch)?'checked':'';
+      const amt=Number(b.invoice)||0;
+      return`<label class="bill-row${checked?' checked':''}" id="bill_row_${i}">
+        <input type="checkbox" ${checked} onchange="onBillCheck(${i},this.checked)" data-idx="${i}"/>
+        <span class="bill-no-text">${b.vch}</span>
+        <span class="bill-amt-text">₹${amt.toLocaleString('en-IN',{minimumFractionDigits:2})}</span>
+      </label>`;
+    }).join('');
+    updateBillSummary();
+  }
+
+  function onBillCheck(idx,checked){
+    const row=document.getElementById('bill_row_'+idx);if(row)row.classList.toggle('checked',checked);
+    const allCB=document.querySelectorAll('#bill_list input[type=checkbox]');
+    document.getElementById('select_all_bills').checked=[...allCB].every(cb=>cb.checked);
+    updateBillSummary();
+  }
+
+  function toggleAllBills(checked){
+    const allCB=document.querySelectorAll('#bill_list input[type=checkbox]');
+    allCB.forEach((cb,i)=>{cb.checked=checked;const row=document.getElementById('bill_row_'+i);if(row)row.classList.toggle('checked',checked);});
+    updateBillSummary();
+  }
+
+  function calcStatus(total,amt){if(!amt||amt<=0)return'Pending';if(amt>=total)return'Paid';return'Partial';}
+
+  function updateBillSummary(){
+    const allCB=document.querySelectorAll('#bill_list input[type=checkbox]');
+    const checked=[...allCB].filter(cb=>cb.checked);
+    const total=checked.reduce((s,cb)=>s+(Number(currentBills[parseInt(cb.dataset.idx)]?.invoice)||0),0);
+    const amt=parseFloat(document.getElementById('f_amount_received')?.value)||0;
+    const status=checked.length>0?calcStatus(total,amt):'Pending';
+    const col=status==='Paid'?'#059669':status==='Partial'?'#2563EB':'#D97706';
+    document.getElementById('status_preview').innerHTML=`Status: <strong style="color:${col}">${status}</strong> &nbsp;|&nbsp; ${checked.length} of ${allCB.length} vouchers`;
+    document.getElementById('total_preview').textContent='₹'+total.toLocaleString('en-IN',{minimumFractionDigits:2});
+  }
+
+  function getSelectedBillData(){
+    const allCB=document.querySelectorAll('#bill_list input[type=checkbox]');
+    const checked=[...allCB].filter(cb=>cb.checked);
+    const billNos=checked.map(cb=>currentBills[parseInt(cb.dataset.idx)]?.vch).filter(Boolean);
+    const total=checked.reduce((s,cb)=>s+(Number(currentBills[parseInt(cb.dataset.idx)]?.invoice)||0),0);
+    const amt=parseFloat(document.getElementById('f_amount_received').value)||0;
+    return{billNos,total,status:checked.length>0?calcStatus(total,amt):'Pending'};
+  }
+
+  async function applyCollectionToPurchases(party,billNos,amtReceived){
+    let remaining=amtReceived;
+    for(const vch of billNos){
+      const{data:sr}=await db.from('makkal_purchases').select('invoice').eq('party',party).eq('vch',vch).maybeSingle();
+      if(!sr)continue;
+      const inv=Number(sr.invoice)||0,paid=Math.min(remaining,inv),bal=inv-paid;
+      const status=bal<=0?'Paid':paid>0?'Partial':'Pending';
+      await db.from('makkal_purchases').update({status}).eq('party',party).eq('vch',vch);
+      remaining=Math.max(0,remaining-paid);
+    }
+  }
+
+  async function resetPurchaseBills(party,billNoStr){
+    if(!party||!billNoStr)return;
+    const bills=billNoStr.split(',').map(s=>s.trim()).filter(Boolean);
+    for(const vch of bills)
+      await db.from('makkal_purchases').update({status:'Pending'}).eq('party',party).eq('vch',vch);
+  }
+
+  function addRow(){editingId=null;document.getElementById('modalTitle').textContent='Add Collection Entry';resetModal();document.getElementById('modal').style.display='flex';document.getElementById('party_search').focus();}
+  function closeModal(){document.getElementById('modal').style.display='none';editingId=null;}
+
+  function resetModal(){
+    document.getElementById('party_search').value='';
+    document.getElementById('party_suggestions').style.display='none';
+    document.getElementById('selected_party_chip').style.display='none';
+    document.getElementById('chip_name').textContent='';
+    document.getElementById('bill_section').style.display='none';
+    document.getElementById('bill_list').innerHTML='<div class="bill-empty">Select a party to view vouchers</div>';
+    document.getElementById('select_all_bills').checked=false;
+    document.getElementById('status_preview').textContent='No vouchers selected';
+    document.getElementById('total_preview').textContent='₹0.00';
+    document.getElementById('f_date').value='';
+    document.getElementById('f_mode').value='Cash';
+    document.getElementById('f_amount_received').value='';
+    document.getElementById('f_remarks').value='';
+    currentBills=[];
+  }
+
+  async function editRow(id){
+    const r=data.find(x=>x.id===id);if(!r)return;
+    editingId=id;document.getElementById('modalTitle').textContent='Edit Collection Entry';resetModal();
+    if(r.party){
+      document.getElementById('chip_name').textContent=r.party;
+      document.getElementById('selected_party_chip').style.display='flex';
+      document.getElementById('bill_section').style.display='block';
+      document.getElementById('bill_list').innerHTML='<div class="bill-empty">Loading vouchers…</div>';
+      currentBills=await fetchBillsForParty(r.party);
+      renderBillList(r.bill_no?r.bill_no.split(',').map(s=>s.trim()):[]);
+    }
+    document.getElementById('f_date').value=toInputDate(r.txn_date);
+    document.getElementById('f_mode').value=r.mode||'Cash';
+    document.getElementById('f_amount_received').value=r.amount_received||'';
+    document.getElementById('f_remarks').value=r.remarks||'';
+    document.getElementById('modal').style.display='flex';
+  }
+
+  async function deleteRow(id){
+    if(!confirm('Delete this entry? This cannot be undone.'))return;
+    const colRow=data.find(x=>x.id===id);
+    const{error}=await db.from('makkal_collection').delete().eq('id',id);
+    if(error){alert('Delete failed: '+error.message);return;}
+    if(colRow)await resetPurchaseBills(colRow.party,colRow.bill_no);
+    data=data.filter(x=>x.id!==id);filtered=filtered.filter(x=>x.id!==id);
+    if((currentPage-1)*PAGE_SIZE>=filtered.length&&currentPage>1)currentPage--;
+    renderTable();
+  }
+
+  async function saveRow(){
+    const party=document.getElementById('chip_name').textContent.trim();
+    if(!party){alert('Please select a party.');return;}
+    const{billNos,total,status}=getSelectedBillData();
+    if(!billNos.length){alert('Please select at least one voucher.');return;}
+    const amtReceived=parseFloat(document.getElementById('f_amount_received').value)||0;
+    const btn=document.getElementById('saveBtn');btn.textContent='Saving…';btn.disabled=true;
+    const row={
+      txn_date:fmtDate(document.getElementById('f_date').value),
+      party,bill_no:billNos.join(', '),invoice_amount:total,status,
+      mode:document.getElementById('f_mode').value||'Cash',
+      amount_received:amtReceived||null,
+      remarks:document.getElementById('f_remarks').value||null,
+    };
+    if(editingId){
+      const oldRow=data.find(x=>x.id===editingId);
+      if(oldRow)await resetPurchaseBills(oldRow.party,oldRow.bill_no);
+      const{error}=await db.from('makkal_collection').update(row).eq('id',editingId);
+      btn.textContent='Save Entry';btn.disabled=false;
+      if(error){alert('Update failed: '+error.message);return;}
+      const idx=data.findIndex(x=>x.id===editingId);if(idx!==-1)data[idx]={...data[idx],...row};filtered=[...data];
+    }else{
+      const{data:inserted,error}=await db.from('makkal_collection').insert([row]).select();
+      btn.textContent='Save Entry';btn.disabled=false;
+      if(error){alert('Save failed: '+error.message);return;}
+      data.unshift(inserted[0]);filtered=[...data];currentPage=1;
+    }
+    await applyCollectionToPurchases(party,billNos,amtReceived);
+    renderTable();closeModal();
+  }
+
+  function exportData(){
+    if(!filtered.length){alert('No records to export.');return;}
+    const rows=filtered.map((r,i)=>({'#':i+1,'Party Name':r.party||'','Date':r.txn_date||'','Voucher No':r.bill_no||'',
+      'Invoice Amount':Number(r.invoice_amount)||0,'Amount Received':Number(r.amount_received)||0,
+      'Balance':(Number(r.invoice_amount)||0)-(Number(r.amount_received)||0),
+      'Status':r.status||'','Payment Mode':r.mode||'','Remarks':r.remarks||''}));
+    const ws=XLSX.utils.json_to_sheet(rows),wb=XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,'Collections');
+    XLSX.writeFile(wb,'Makkal_Collections_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  }
+
+  function col(row,...keys){for(const k of keys)for(const rk of Object.keys(row))if(rk.trim().toLowerCase()===k.toLowerCase()&&row[rk]!=null&&row[rk]!=='')return row[rk];return null;}
+  function toStr(v){if(v==null||v==='')return null;if(v instanceof Date)return v.toLocaleDateString('en-IN',{day:'2-digit',month:'2-digit',year:'numeric'});return String(v).trim()||null;}
+  function toNum(v){if(v==null||v==='')return 0;const n=parseFloat(String(v).replace(/[₹,\s]/g,''));return isNaN(n)?0:n;}
+  function setProgress(done,total,msg){document.getElementById('progBar').style.width=(total?Math.round(done/total*100):0)+'%';document.getElementById('progLabel').textContent=done+' / '+total+' rows';if(msg)document.getElementById('importMsg').textContent=msg;}
+
+  function importFile(e){
+    const file=e.target.files[0];if(!file)return;e.target.value='';
+    const overlay=document.getElementById('importOverlay');overlay.classList.add('show');setProgress(0,0,'Reading file…');
+    const reader=new FileReader();
+    reader.onload=async function(evt){
+      try{
+        const wb=XLSX.read(evt.target.result,{type:'array',cellDates:true});
+        const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+        if(!rows.length){overlay.classList.remove('show');alert('No data rows found.');return;}
+        const mapped=rows.map(r=>({
+          txn_date:importDate(toStr(col(r,'Date','date','Txn Date'))),
+          party:toStr(col(r,'Party Name','party_name','Party','party')),
+          bill_no:toStr(col(r,'Voucher No','vch','bill_no','Bill No','Voucher')),
+          invoice_amount:toNum(col(r,'Invoice Amount','invoice_amount','Invoice','Amount')),
+          amount_received:toNum(col(r,'Amount Received','amount_received','Received'))||null,
+          status:toStr(col(r,'Status','status'))||'Pending',
+          mode:toStr(col(r,'Payment Mode','Mode','mode'))||'Cash',
+          remarks:toStr(col(r,'Remarks','remarks')),
+        })).filter(r=>Object.values(r).some(v=>v!==null&&v!==''&&v!==0));
+        if(!mapped.length){overlay.classList.remove('show');alert('No valid rows to import.');return;}
+        const BATCH=500,total=mapped.length;let inserted=0;setProgress(0,total,'Uploading…');
+        for(let i=0;i<total;i+=BATCH){
+          const{error}=await db.from('makkal_collection').insert(mapped.slice(i,i+BATCH));
+          if(error){overlay.classList.remove('show');alert('Error at row '+(i+1)+':\n'+error.message);return;}
+          inserted+=Math.min(BATCH,total-i);setProgress(inserted,total,'Uploading…');
+        }
+        overlay.classList.remove('show');alert('✅ '+inserted+' records imported!');loadData();
+      }catch(err){overlay.classList.remove('show');alert('Failed to read file:\n'+err.message);}
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  Promise.all([loadData(),loadParties()]);
+</script>
+</body>
+</html>
