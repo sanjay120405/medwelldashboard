@@ -54,14 +54,15 @@
 
     /* Chart panels */
     .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:18px;align-items:stretch}
-    .panel{background:white;border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,0.05)}
-    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+    .panel{background:white;border-radius:14px;padding:18px;box-shadow:0 1px 6px rgba(0,0,0,0.05);display:flex;flex-direction:column}
+    .panel-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
     .panel-title{font-size:14px;font-weight:700;color:#111827}
-    .panel-sub{font-size:11px;color:#9CA3AF;margin-bottom:14px}
+    .panel-sub{font-size:11px;color:#9CA3AF;margin-bottom:10px}
 
     /* Donut */
-    .donut-wrap{width:160px;height:160px;margin:0 auto 14px}
-    .legend{display:flex;flex-direction:column;gap:8px;margin-top:4px}
+    .donut-wrap{width:220px;height:220px;margin:0 auto;flex:1;display:flex;align-items:center;justify-content:center}
+    .donut-wrap canvas{width:100%!important;height:100%!important}
+    .legend{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-top:12px;border-top:1px solid #F3F4F6}
     .leg-item{display:flex;align-items:center;gap:8px;font-size:12px;color:#374151;font-weight:500}
     .leg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0}
     .leg-val{margin-left:auto;font-weight:700;color:#111827;font-size:12px}
