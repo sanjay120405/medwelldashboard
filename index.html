@@ -251,6 +251,7 @@
 
   // Global raw data (normalised to {dt, amt})
   let rawData = { purchase:[], sales:[], collection:[], payment:[] };
+  let nullDtCounts = { purchase:0, sales:0, collection:0, payment:0 };
 
   function parseDt(d) {
     if (!d) return null;
@@ -350,15 +351,22 @@
     else if (yr !== null)           period = String(yr);
     else if (mo !== null)           period = MONTH_FULL[mo];
 
+    const filterActive = yr !== null || mo !== null;
+    function subText(total, nullCount) {
+      if (!filterActive) return 'All Time';
+      if (total === 0 && nullCount > 0) return period + ' • ' + nullCount + ' records have no date';
+      return period;
+    }
+
     // Stat cards
     document.getElementById('stat-purchase').textContent   = fmtAmt(totP);
     document.getElementById('stat-sales').textContent      = fmtAmt(totS);
     document.getElementById('stat-collection').textContent = fmtAmt(totC);
     document.getElementById('stat-payment').textContent    = fmtAmt(totPa);
-    document.getElementById('sub-purchase').textContent   = period;
-    document.getElementById('sub-sales').textContent      = period;
-    document.getElementById('sub-collection').textContent = period;
-    document.getElementById('sub-payment').textContent    = period;
+    document.getElementById('sub-purchase').textContent   = subText(totP,  nullDtCounts.purchase);
+    document.getElementById('sub-sales').textContent      = subText(totS,  nullDtCounts.sales);
+    document.getElementById('sub-collection').textContent = subText(totC,  nullDtCounts.collection);
+    document.getElementById('sub-payment').textContent    = subText(totPa, nullDtCounts.payment);
 
     // Donut
     donutChart.data.datasets[0].data = [totP, totS, totC, totPa];
@@ -425,10 +433,12 @@
       payment:    [...norm(wPay,'invoice_amount'), ...norm(mPay,'invoice_amount')],
     };
 
-    // Diagnostic: log sample dates so we can verify the format coming from Supabase
-    console.log('[Dashboard] Sample wholesale_purchase dates:', wPurch.slice(0,3).map(r=>r.txn_date));
-    console.log('[Dashboard] Purchase rows:', wPurch.length, '| null-date count:', wPurch.filter(r=>!r.txn_date).length);
-    console.log('[Dashboard] Sample wholesale_sales dates:', wSales.slice(0,3).map(r=>r.txn_date));
+    nullDtCounts = {
+      purchase:   rawData.purchase.filter(r=>!r.dt).length,
+      sales:      rawData.sales.filter(r=>!r.dt).length,
+      collection: rawData.collection.filter(r=>!r.dt).length,
+      payment:    rawData.payment.filter(r=>!r.dt).length,
+    };
 
     applyFilter();
   }
