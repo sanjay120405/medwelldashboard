@@ -159,7 +159,7 @@
         <div class="stat-badge" style="background:#EFF6FF">🛒</div>
       </div>
       <div class="stat-value" id="stat-purchase">…</div>
-      <div class="stat-sub">Total purchase value</div>
+      <div class="stat-sub" id="sub-purchase">All Time</div>
     </div>
     <div class="stat-card s-green">
       <div class="stat-top">
@@ -167,7 +167,7 @@
         <div class="stat-badge" style="background:#ECFDF5">📈</div>
       </div>
       <div class="stat-value" id="stat-sales">…</div>
-      <div class="stat-sub">Total sales revenue</div>
+      <div class="stat-sub" id="sub-sales">All Time</div>
     </div>
     <div class="stat-card s-orange">
       <div class="stat-top">
@@ -175,7 +175,7 @@
         <div class="stat-badge" style="background:#FFF7ED">💰</div>
       </div>
       <div class="stat-value" id="stat-collection">…</div>
-      <div class="stat-sub">Total amount collected</div>
+      <div class="stat-sub" id="sub-collection">All Time</div>
     </div>
     <div class="stat-card s-purple">
       <div class="stat-top">
@@ -183,7 +183,7 @@
         <div class="stat-badge" style="background:#F5F3FF">💳</div>
       </div>
       <div class="stat-value" id="stat-payment">…</div>
-      <div class="stat-sub">Total amount paid</div>
+      <div class="stat-sub" id="sub-payment">All Time</div>
     </div>
   </div>
 
@@ -254,7 +254,8 @@
 
   function parseDt(d) {
     if (!d) return null;
-    d = String(d).trim(); let m;
+    d = String(d).trim().split(/[T ]/)[0]; // strip time component
+    let m;
     m = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (m) return new Date(+m[1], +m[2]-1, +m[3]);
     m = d.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4})$/);
@@ -343,11 +344,21 @@
     const totC  = fC.reduce ((s,r)=>s+r.amt,0);
     const totPa = fPa.reduce((s,r)=>s+r.amt,0);
 
+    // Period label
+    let period = 'All Time';
+    if (yr !== null && mo !== null) period = MONTH_FULL[mo] + ' ' + yr;
+    else if (yr !== null)           period = String(yr);
+    else if (mo !== null)           period = MONTH_FULL[mo];
+
     // Stat cards
     document.getElementById('stat-purchase').textContent   = fmtAmt(totP);
     document.getElementById('stat-sales').textContent      = fmtAmt(totS);
     document.getElementById('stat-collection').textContent = fmtAmt(totC);
     document.getElementById('stat-payment').textContent    = fmtAmt(totPa);
+    document.getElementById('sub-purchase').textContent   = period;
+    document.getElementById('sub-sales').textContent      = period;
+    document.getElementById('sub-collection').textContent = period;
+    document.getElementById('sub-payment').textContent    = period;
 
     // Donut
     donutChart.data.datasets[0].data = [totP, totS, totC, totPa];
@@ -358,17 +369,13 @@
     document.getElementById('leg-payment').textContent    = fmtAmt(totPa);
 
     // Year badge
-    let badge = 'All Time';
-    if (yr && mo !== null) badge = MONTH_FULL[mo] + ' ' + yr;
-    else if (yr)           badge = String(yr);
-    else if (mo !== null)  badge = MONTH_FULL[mo];
-    document.getElementById('yearBadge').textContent = badge;
+    document.getElementById('yearBadge').textContent = period;
 
     // Bar chart
     const metric = document.getElementById('chartMetric').value;
     const fMetric = { purchase:fP, sales:fS, collection:fC, payment:fPa }[metric];
 
-    if (mo !== null && yr !== null) {
+    if (mo !== null && yr !== null) { // month + year → daily view
       // Daily view for selected month+year
       const days = new Date(yr, mo+1, 0).getDate();
       const labels = Array.from({length:days}, (_,i) => i+1);
