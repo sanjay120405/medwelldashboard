@@ -404,11 +404,11 @@
       fetchAll('wholesale_sales',     'txn_date,invoice_amt'),
       fetchAll('retail_sales',        'txn_date,amount'),
       fetchAll('makkal_sales',        'txn_date,amount'),
-      fetchAll('wholesale_collection','txn_date,amount_received'),
-      fetchAll('makkal_collection',   'txn_date,amount_received'),
+      fetchAll('wholesale_collection','txn_date,invoice_amount'),
+      fetchAll('makkal_collection',   'txn_date,invoice_amount'),
       fetchAll('lab_collection',      'txn_date,total_amount'),
-      fetchAll('wholesale_payments',  'txn_date,amount_received'),
-      fetchAll('makkal_payments',     'txn_date,amount_received'),
+      fetchAll('wholesale_payments',  'txn_date,invoice_amount'),
+      fetchAll('makkal_payments',     'txn_date,invoice_amount'),
     ]);
 
     function norm(rows, field) { return rows.map(r => ({dt:parseDt(r.txn_date), amt:+(r[field]||0)})).filter(r=>r.dt); }
@@ -416,8 +416,8 @@
     rawData = {
       purchase:   [...norm(wPurch,'invoice'),       ...norm(mPurch,'invoice')],
       sales:      [...norm(wSales,'invoice_amt'),   ...norm(rSales,'amount'),  ...norm(mSales,'amount')],
-      collection: [...norm(wCol,'amount_received'), ...norm(mCol,'amount_received'), ...norm(labCol,'total_amount')],
-      payment:    [...norm(wPay,'amount_received'), ...norm(mPay,'amount_received')],
+      collection: [...norm(wCol,'invoice_amount'), ...norm(mCol,'invoice_amount'), ...norm(labCol,'total_amount')],
+      payment:    [...norm(wPay,'invoice_amount'), ...norm(mPay,'invoice_amount')],
     };
 
     applyFilter();
