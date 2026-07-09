@@ -425,6 +425,11 @@
       payment:    [...norm(wPay,'invoice_amount'), ...norm(mPay,'invoice_amount')],
     };
 
+    // Diagnostic: log sample dates so we can verify the format coming from Supabase
+    console.log('[Dashboard] Sample wholesale_purchase dates:', wPurch.slice(0,3).map(r=>r.txn_date));
+    console.log('[Dashboard] Purchase rows:', wPurch.length, '| null-date count:', wPurch.filter(r=>!r.txn_date).length);
+    console.log('[Dashboard] Sample wholesale_sales dates:', wSales.slice(0,3).map(r=>r.txn_date));
+
     applyFilter();
   }
 
