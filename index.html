@@ -329,9 +329,8 @@
     // Filter raw data
     function filterCat(rows) {
       return rows.filter(r => {
-        if (!r.dt) return false;
-        if (yr !== null && r.dt.getFullYear() !== yr) return false;
-        if (mo !== null && r.dt.getMonth()    !== mo) return false;
+        if (yr !== null) { if (!r.dt || r.dt.getFullYear() !== yr) return false; }
+        if (mo !== null) { if (!r.dt || r.dt.getMonth()    !== mo) return false; }
         return true;
       });
     }
@@ -411,7 +410,7 @@
       fetchAll('makkal_payments',     'txn_date,invoice_amount'),
     ]);
 
-    function norm(rows, field) { return rows.map(r => ({dt:parseDt(r.txn_date), amt:+(r[field]||0)})).filter(r=>r.dt); }
+    function norm(rows, field) { return rows.map(r => ({dt:parseDt(r.txn_date), amt:+(r[field]||0)})); }
 
     rawData = {
       purchase:   [...norm(wPurch,'invoice'),       ...norm(mPurch,'invoice')],
