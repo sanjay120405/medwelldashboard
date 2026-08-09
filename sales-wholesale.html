@@ -391,6 +391,7 @@
               <th>#</th>
               <th>Date</th>
               <th>Party</th>
+              <th>Sales Exec</th>
               <th>Bill No</th>
               <th class="right">Tax Amt (₹)</th>
               <th class="right">CGST (₹)</th>
@@ -446,6 +447,18 @@
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Party Name</label>
           <input id="f_party" type="text" placeholder="Customer / Party" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
+        </div>
+        <div>
+          <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Sales Executive</label>
+          <select id="f_sales_executive" style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;">
+            <option value="">— Select —</option>
+            <option value="Dinesh">Dinesh</option>
+            <option value="Selva">Selva</option>
+            <option value="Vanitha">Vanitha</option>
+            <option value="Santhosh">Santhosh</option>
+            <option value="Chola">Chola</option>
+            <option value="MGR">MGR</option>
+          </select>
         </div>
         <div>
           <label style="font-size:12px;color:#6B7280;font-weight:600;display:block;margin-bottom:5px;">Bill No</label>
@@ -522,7 +535,7 @@
 
     async function loadData() {
       document.getElementById('salesBody').innerHTML =
-        '<tr class="empty-row"><td colspan="17" style="color:#9CA3AF">Loading…</td></tr>';
+        '<tr class="empty-row"><td colspan="18" style="color:#9CA3AF">Loading…</td></tr>';
       const FETCH_SIZE = 1000;
       let allRows = [], from = 0;
       while (true) {
@@ -533,7 +546,7 @@
           .range(from, from + FETCH_SIZE - 1);
         if (error) {
           document.getElementById('salesBody').innerHTML =
-            `<tr class="empty-row"><td colspan="17" style="color:#EF4444">Error: ${error.message}</td></tr>`;
+            `<tr class="empty-row"><td colspan="18" style="color:#EF4444">Error: ${error.message}</td></tr>`;
           return;
         }
         if (!rows || rows.length === 0) break;
@@ -559,13 +572,14 @@
       const tbody = document.getElementById('salesBody');
 
       if (slice.length === 0) {
-        tbody.innerHTML = '<tr class="empty-row"><td colspan="17">No records found</td></tr>';
+        tbody.innerHTML = '<tr class="empty-row"><td colspan="18">No records found</td></tr>';
       } else {
         tbody.innerHTML = slice.map((r, i) => `
           <tr>
             <td style="color:#9CA3AF;font-size:12px">${start + i + 1}</td>
             <td class="td-date">${esc(r.txn_date)}</td>
             <td class="td-party">${esc(r.party)}</td>
+            <td style="font-size:12px;color:#6B7280">${esc(r.sales_executive)}</td>
             <td class="td-vch">${esc(r.bill_no)}</td>
             <td class="td-amt right">${fmt(r.tax_amt)}</td>
             <td class="td-tax right">${fmt(r.cgst)}</td>
@@ -642,7 +656,8 @@
         if (q) {
           const hit = (r.party||'').toLowerCase().includes(q) ||
                       (r.bill_no||'').toLowerCase().includes(q) ||
-                      (r.txn_date||'').toLowerCase().includes(q);
+                      (r.txn_date||'').toLowerCase().includes(q) ||
+                      (r.sales_executive||'').toLowerCase().includes(q);
           if (!hit) return false;
         }
         if (month || year) {
@@ -705,6 +720,7 @@
       ['f_date','f_party','f_bill_no','f_tax_amt','f_cgst','f_sgst','f_igst','f_invoice_amt','f_transport','f_margin','f_commission','f_net_profit','f_paid_amt','f_balance']
         .forEach(id => document.getElementById(id).value = '');
       document.getElementById('f_payment').value = '';
+      document.getElementById('f_sales_executive').value = '';
     }
 
     function editRow(id) {
@@ -726,7 +742,8 @@
       document.getElementById('f_net_profit').value   = ((Number(r.margin)||0) - ((Number(r.transport)||0) + (Number(r.commission)||0))).toFixed(2);
       document.getElementById('f_paid_amt').value     = r.paid_amt || '';
       document.getElementById('f_balance').value      = ((Number(r.invoice_amt)||0) - (Number(r.paid_amt)||0)).toFixed(2);
-      document.getElementById('f_payment').value      = r.payment || '';
+      document.getElementById('f_payment').value          = r.payment || '';
+      document.getElementById('f_sales_executive').value  = r.sales_executive || '';
       document.getElementById('modal').style.display = 'flex';
     }
 
@@ -758,7 +775,8 @@
         net_profit:  (parseFloat(document.getElementById('f_margin').value) || 0) - ((parseFloat(document.getElementById('f_transport').value) || 0) + (parseFloat(document.getElementById('f_commission').value) || 0)),
         paid_amt:    parseFloat(document.getElementById('f_paid_amt').value) || 0,
         balance:     (parseFloat(document.getElementById('f_invoice_amt').value) || 0) - (parseFloat(document.getElementById('f_paid_amt').value) || 0),
-        payment:     document.getElementById('f_payment').value || null,
+        payment:          document.getElementById('f_payment').value || null,
+        sales_executive:  document.getElementById('f_sales_executive').value || null,
       };
 
       if (editingId) {
@@ -784,9 +802,10 @@
       if (!filtered.length) { alert('No records to export.'); return; }
       const rows = filtered.map((r, i) => ({
         '#':               i + 1,
-        'Date':            r.txn_date || '',
-        'Party':           r.party || '',
-        'Bill No':         r.bill_no || '',
+        'Date':              r.txn_date || '',
+        'Party':             r.party || '',
+        'Sales Executive':   r.sales_executive || '',
+        'Bill No':           r.bill_no || '',
         'Tax Amt (₹)':     Number(r.tax_amt) || 0,
         'CGST (₹)':        Number(r.cgst) || 0,
         'SGST (₹)':        Number(r.sgst) || 0,
@@ -852,8 +871,9 @@
 
           const mapped = rows.map(r => ({
             txn_date:    importDate(col(r, 'Date', 'date', 'DATE', 'Txn Date', 'Transaction Date')),
-            party:       toStr(col(r, 'Party', 'Party Name', 'Customer', 'Client')),
-            bill_no:     toStr(col(r, 'Bill No', 'Bill No.', 'Vch/Bill No.', 'Vch No', 'Invoice No', 'Voucher No')),
+            party:           toStr(col(r, 'Party', 'Party Name', 'Customer', 'Client')),
+            sales_executive: toStr(col(r, 'Sales Executive', 'Sales Exec', 'sales_executive')),
+            bill_no:         toStr(col(r, 'Bill No', 'Bill No.', 'Vch/Bill No.', 'Vch No', 'Invoice No', 'Voucher No')),
             tax_amt:     toNum(col(r, 'Tax Amt', 'Tax Amt (₹)', 'Tax Amount', 'Taxable Amount', 'Taxable', 'TAX AMT')),
             cgst:        toNum(col(r, 'CGST', 'CGST (₹)')),
             sgst:        toNum(col(r, 'SGST', 'SGST (₹)')),
