@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
@@ -105,10 +105,10 @@
     #importOverlay.show { display:flex; }
     .import-box { background:#fff; border-radius:16px; padding:32px 36px; width:340px; box-shadow:0 20px 60px rgba(0,0,0,0.2); text-align:center; }
     .import-box h3 { font-size:16px; font-weight:700; color:#111827; margin-bottom:6px; }
-    .import-box p  { font-size:13px; color:#6B7280; margin-bottom:20px; }
+    .import-box p  { font-size:13px; color:#111827; margin-bottom:20px; }
     .prog-track { background:#E5E7EB; border-radius:99px; height:10px; overflow:hidden; margin-bottom:10px; }
     .prog-bar   { height:100%; background:linear-gradient(90deg,#2563EB,#60A5FA); border-radius:99px; transition:width .3s; width:0%; }
-    .prog-label { font-size:12px; color:#6B7280; }
+    .prog-label { font-size:12px; color:#111827; }
 
     /* Modal input / select shared style */
     .f-input {
@@ -246,7 +246,7 @@
     <div style="background:#fff;border-radius:16px;padding:28px;width:500px;max-width:95vw;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:22px;">
         <span id="modalTitle" style="font-size:17px;font-weight:700;color:#111827;">Add Expense Entry</span>
-        <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#9CA3AF;">✕</button>
+        <button onclick="closeModal()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#111827;">✕</button>
       </div>
       <div style="display:flex;flex-direction:column;gap:14px;">
 
@@ -341,7 +341,7 @@
 
     async function loadData() {
       document.getElementById('expBody').innerHTML =
-        '<tr class="empty-row"><td colspan="8" style="color:#9CA3AF">Loading…</td></tr>';
+        '<tr class="empty-row"><td colspan="8" style="color:#111827">Loading…</td></tr>';
       const FETCH_SIZE = 1000;
       let allRows = [], from = 0;
       while (true) {
