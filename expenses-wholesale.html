@@ -350,7 +350,7 @@
         const { data: rows, error } = await db
           .from('wholesale_expenses')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('txn_date', { ascending: false })
           .range(from, from + FETCH_SIZE - 1);
         if (error) {
           document.getElementById('expBody').innerHTML =

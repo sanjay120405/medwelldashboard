@@ -278,7 +278,7 @@
     document.getElementById('paymentBody').innerHTML='<tr class="empty-row"><td colspan="11">Loading&#x2026;</td></tr>';
     const FETCH_SIZE=1000; let allRows=[],from=0;
     while(true){
-      const{data:rows,error}=await db.from('makkal_payments').select('*').order('created_at',{ascending:false}).range(from,from+FETCH_SIZE-1);
+      const{data:rows,error}=await db.from('makkal_payments').select('*').order('txn_date', { ascending: false }).range(from,from+FETCH_SIZE-1);
       if(error){document.getElementById('paymentBody').innerHTML=`<tr class="empty-row"><td colspan="11" style="color:#EF4444">Error: ${error.message}</td></tr>`;return;}
       if(!rows||rows.length===0) break;
       allRows=allRows.concat(rows); if(rows.length<FETCH_SIZE) break; from+=FETCH_SIZE;
@@ -299,7 +299,7 @@
   async function fetchBillsForParty(name){
     const FETCH_SIZE=1000; let allRows=[],from=0;
     while(true){
-      const{data:rows,error}=await db.from('makkal_sales').select('invoice,amount').eq('patient_name',name).order('created_at',{ascending:false}).range(from,from+FETCH_SIZE-1);
+      const{data:rows,error}=await db.from('makkal_sales').select('invoice,amount').eq('patient_name',name).order('txn_date', { ascending: false }).range(from,from+FETCH_SIZE-1);
       if(error||!rows||rows.length===0) break;
       allRows=allRows.concat(rows); if(rows.length<FETCH_SIZE) break; from+=FETCH_SIZE;
     }

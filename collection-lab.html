@@ -314,7 +314,7 @@
         const { data: rows, error } = await db
           .from('lab_collection')
           .select('*')
-          .order('created_at', { ascending: false })
+          .order('txn_date', { ascending: false })
           .range(from, from + FETCH_SIZE - 1);
         if (error) {
           document.getElementById('colBody').innerHTML =

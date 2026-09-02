@@ -395,7 +395,7 @@
       const { data: rows, error } = await db
         .from('wholesale_collection')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('txn_date', { ascending: false })
         .range(from, from + FETCH_SIZE - 1);
       if (error) {
         document.getElementById('collectionBody').innerHTML =
@@ -434,7 +434,7 @@
         .from('wholesale_purchases')
         .select('vch, invoice')
         .eq('party', party)
-        .order('created_at', { ascending: false })
+        .order('txn_date', { ascending: false })
         .range(from, from + FETCH_SIZE - 1);
       if (error || !rows || rows.length === 0) break;
       allRows = allRows.concat(rows);
