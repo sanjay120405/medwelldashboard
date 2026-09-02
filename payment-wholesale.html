@@ -817,7 +817,7 @@
   }
 
   async function deleteRow(id) {
-    if (!confirm('Delete this payment entry? This cannot be undone.')) return;
+    if (!await confirmAction('Delete this payment entry? This cannot be undone.')) return;
     const payRow = data.find(x => x.id === id);
     const { error } = await db.from('wholesale_payments').delete().eq('id', id);
     if (error) { alert('Delete failed: ' + error.message); return; }
@@ -1017,5 +1017,17 @@
   /* ─── Init ─── */
   Promise.all([loadData(), loadParties()]);
 </script>
+  <!-- Confirm Delete Modal -->
+  <div id="confirmModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:99999;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;padding:28px 32px;width:340px;max-width:92vw;box-shadow:0 20px 60px rgba(0,0,0,0.25);text-align:center;">
+      <div style="width:52px;height:52px;background:#FEE2E2;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:24px;">🗑</div>
+      <div style="font-size:17px;font-weight:700;color:#111827;margin-bottom:8px;">Delete Entry?</div>
+      <div id="confirmMsg" style="font-size:13px;color:#111827;margin-bottom:24px;line-height:1.5;">This action cannot be undone.</div>
+      <div style="display:flex;gap:10px;justify-content:center;">
+        <button id="confirmCancelBtn" style="padding:10px 24px;border:1.5px solid #E5E7EB;border-radius:8px;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#111827;">Cancel</button>
+        <button id="confirmOkBtn" style="padding:10px 24px;background:#DC2626;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Delete</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
