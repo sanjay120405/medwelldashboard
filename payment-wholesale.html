@@ -418,7 +418,7 @@
       const { data: rows, error } = await db
         .from('wholesale_payments')
         .select('*')
-        .order('txn_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(from, from + FETCH_SIZE - 1);
       if (error) {
         document.getElementById('paymentBody').innerHTML =
@@ -462,7 +462,7 @@
         .from('wholesale_sales')
         .select('bill_no, invoice_amt')
         .eq('party', party)
-        .order('txn_date', { ascending: false })
+        .order('created_at', { ascending: false })
         .range(from, from + FETCH_SIZE - 1);
       if (error || !rows || rows.length === 0) break;
       allRows = allRows.concat(rows);
@@ -1031,3 +1031,4 @@
   </div>
 </body>
 </html>
+

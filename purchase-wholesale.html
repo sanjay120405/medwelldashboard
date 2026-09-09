@@ -460,7 +460,7 @@
         const { data: rows, error } = await db
           .from('wholesale_purchases')
           .select('*')
-          .order('txn_date', { ascending: false })
+          .order('created_at', { ascending: false })
           .range(from, from + FETCH_SIZE - 1);
         if (error) {
           document.getElementById('purchaseBody').innerHTML =
@@ -822,3 +822,4 @@
   </div>
 </body>
 </html>
+
