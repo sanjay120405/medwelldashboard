@@ -806,7 +806,7 @@
       // SGST mirrors CGST
       document.getElementById('f_sgst').value = cgst > 0 ? cgst : '';
       const sgst = cgst;
-      const invoice = taxable + cgst + sgst + igst + transport;
+      const invoice = Math.round(taxable + cgst + sgst + igst + transport);
       document.getElementById('f_invoice').value = invoice > 0 ? invoice.toFixed(2) : '';
     }
 
