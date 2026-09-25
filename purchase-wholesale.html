@@ -858,6 +858,10 @@
     }
     function hideSupplierList() {
       document.getElementById('supplierDropdown').style.display = 'none';
+      const val = document.getElementById('f_party').value.trim();
+      if (val && !supplierList.some(n => n.toLowerCase() === val.toLowerCase())) {
+        document.getElementById('f_party').value = '';
+      }
     }
 
     function _parseDate(d) {
