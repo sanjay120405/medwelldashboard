@@ -398,7 +398,7 @@
         <div style="position:relative;">
           <label style="font-size:12px;color:#111827;font-weight:600;display:block;margin-bottom:5px;">Party / Supplier</label>
           <input id="f_party" type="text" placeholder="Search supplier…" autocomplete="off"
-            oninput="filterSupplierList()" onfocus="showSupplierList()" onblur="setTimeout(hideSupplierList,150)"
+            oninput="filterSupplierList()" onfocus="showSupplierList()"
             style="width:100%;padding:9px 12px;border:1.5px solid #E5E7EB;border-radius:8px;font-size:13px;outline:none;"/>
         </div>
         <div>
@@ -849,7 +849,7 @@
       dd.style.left   = rect.left + 'px';
       dd.style.width  = rect.width + 'px';
       dd.innerHTML = matches.map(n =>
-        `<div onmousedown="event.preventDefault();selectSupplier(${JSON.stringify(n)})"
+        `<div onclick="selectSupplier(${JSON.stringify(n)})"
           style="padding:10px 14px;font-size:13px;cursor:pointer;color:#111827;border-bottom:1px solid #F3F4F6;font-weight:500;"
           onmouseover="this.style.background='#EFF6FF';this.style.color='#2563EB'"
           onmouseout="this.style.background='';this.style.color='#111827'">${n}</div>`
@@ -863,6 +863,13 @@
     function hideSupplierList() {
       document.getElementById('supplierDropdown').style.display = 'none';
     }
+    document.addEventListener('click', function(e) {
+      const dd = document.getElementById('supplierDropdown');
+      const inp = document.getElementById('f_party');
+      if (dd && inp && !dd.contains(e.target) && e.target !== inp) {
+        dd.style.display = 'none';
+      }
+    });
 
     function _parseDate(d) {
       if (!d) return 0;
