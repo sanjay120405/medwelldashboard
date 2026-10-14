@@ -724,12 +724,14 @@
       closeModal();
     }
 
-    function exportData() {
+    async function exportData() {
       if (!filtered.length) { alert('No records to export.'); return; }
+      await loadSuppliers();
       const rows = filtered.map((r, i) => ({
         '#':                   i + 1,
         'Date':                r.txn_date || '',
         'Party / Supplier':    r.party || '',
+        'GSTIN':               supplierGstinMap[r.party] || '',
         'Bill No./Invoice No.': r.vch || '',
         'Taxable Amount (₹)':  Number(r.taxable) || 0,
         'CGST (₹)':            Number(r.cgst) || 0,
@@ -831,11 +833,13 @@
     }
 
     let supplierList = [];
+    let supplierGstinMap = {};
     async function loadSuppliers() {
       if (supplierList.length) return;
-      const { data: rows } = await db.from('suppliers').select('name').order('name', { ascending: true });
+      const { data: rows } = await db.from('suppliers').select('name,gstin').order('name', { ascending: true });
       if (rows) {
         supplierList = rows.map(r => r.name).filter(Boolean);
+        rows.forEach(r => { if (r.name) supplierGstinMap[r.name] = r.gstin || ''; });
         const sel = document.getElementById('f_party');
         const cur = sel.value;
         sel.innerHTML = '<option value="">— Select Supplier —</option>' +
